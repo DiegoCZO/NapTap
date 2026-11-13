@@ -6,6 +6,12 @@ import android.app.KeyguardManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -27,7 +33,10 @@ import android.view.accessibility.AccessibilityNodeInfo
  *      - locked (keyguard) → is "lock screen" enabled? is the PIN/password pad hidden?
  *      - unlocked → is the active window the default launcher, with the app drawer closed?
  *
- * 3. If so, performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) turns the screen off.
+ * 3. With pocket protection on, the proximity sensor is read once: if something covers
+ *    the screen (pocket, bag), nothing happens.
+ *
+ * 4. If so, performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) turns the screen off.
  *    This locks just like the power button, so fingerprint / face unlock keep working
  *    (unlike "device admin", which forces the PIN).
  */
@@ -37,10 +46,22 @@ class DoubleTapService : AccessibilityService() {
     private var sensor: View? = null
     private var lastTapTime = 0L
 
+    private val handler = Handler(Looper.getMainLooper())
+    private var proximityListener: SensorEventListener? = null
+
+    /** Checks GitHub for a new version every few hours (at most one real check a day). */
+    private val updateCheck = object : Runnable {
+        override fun run() {
+            UpdateNotifier.checkIfDue(this@DoubleTapService)
+            handler.postDelayed(this, UPDATE_CHECK_INTERVAL_MS)
+        }
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         windowManager = getSystemService(WindowManager::class.java)
         addTouchSensor()
+        handler.postDelayed(updateCheck, 60_000L)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -82,7 +103,10 @@ class DoubleTapService : AccessibilityService() {
 
         if (lastTapTime != 0L && delta in MIN_GAP_MS..timeout) {
             lastTapTime = 0L
-            if (isAllowedContext(homeOn, lockOn)) lockNow(prefs.getBoolean(Prefs.KEY_VIBRATE, false))
+            if (isAllowedContext(homeOn, lockOn)) {
+                val vibrate = prefs.getBoolean(Prefs.KEY_VIBRATE, false)
+                if (prefs.getBoolean(Prefs.KEY_POCKET, true)) lockIfNotCovered(vibrate) else lockNow(vibrate)
+            }
         } else {
             lastTapTime = time
         }
@@ -164,6 +188,50 @@ class DoubleTapService : AccessibilityService() {
         return false
     }
 
+    /**
+     * Reads the proximity sensor once. Covered (pocket, bag, face down on something) →
+     * do nothing. No sensor or no reading in time → lock anyway.
+     */
+    private fun lockIfNotCovered(vibrate: Boolean) {
+        if (proximityListener != null) return  // a check is already running
+        val sensorManager = getSystemService(SensorManager::class.java)
+        val proximity = sensorManager?.getDefaultSensor(Sensor.TYPE_PROXIMITY)
+        if (sensorManager == null || proximity == null) {
+            lockNow(vibrate)
+            return
+        }
+        val nearThreshold = minOf(proximity.maximumRange, 5f)
+
+        var finished = false
+        lateinit var timeout: Runnable
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                if (finished) return
+                finished = true
+                stop(this, timeout)
+                val covered = event.values[0] < nearThreshold
+                if (!covered) lockNow(vibrate)
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+        timeout = Runnable {
+            if (!finished) {
+                finished = true
+                stop(listener, timeout)
+                lockNow(vibrate)
+            }
+        }
+        proximityListener = listener
+        sensorManager.registerListener(listener, proximity, SensorManager.SENSOR_DELAY_FASTEST, handler)
+        handler.postDelayed(timeout, PROXIMITY_TIMEOUT_MS)
+    }
+
+    private fun stop(listener: SensorEventListener, timeout: Runnable) {
+        getSystemService(SensorManager::class.java)?.unregisterListener(listener)
+        handler.removeCallbacks(timeout)
+        proximityListener = null
+    }
+
     private fun lockNow(vibrate: Boolean) {
         if (vibrate) {
             sensor?.performHapticFeedback(
@@ -176,9 +244,11 @@ class DoubleTapService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         when (event?.eventType) {
-            // If the first tap opened an app / notification / shortcut, it's not a double tap.
+            // If the first tap opened an app / notification / widget, or scrolled something
+            // (e.g. a list inside a widget), it's not a double tap.
             AccessibilityEvent.TYPE_VIEW_CLICKED,
-            AccessibilityEvent.TYPE_VIEW_LONG_CLICKED -> lastTapTime = 0L
+            AccessibilityEvent.TYPE_VIEW_LONG_CLICKED,
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> lastTapTime = 0L
         }
     }
 
@@ -195,6 +265,9 @@ class DoubleTapService : AccessibilityService() {
     }
 
     private fun removeSensor() {
+        handler.removeCallbacksAndMessages(null)
+        proximityListener?.let { getSystemService(SensorManager::class.java)?.unregisterListener(it) }
+        proximityListener = null
         sensor?.let { v -> try { windowManager?.removeView(v) } catch (_: Exception) {} }
         sensor = null
     }
@@ -203,6 +276,8 @@ class DoubleTapService : AccessibilityService() {
         /** Ignore near-simultaneous touches (two fingers at once). */
         private const val MIN_GAP_MS = 40L
         private const val MAX_NODES_SCANNED = 600
+        private const val PROXIMITY_TIMEOUT_MS = 300L
+        private const val UPDATE_CHECK_INTERVAL_MS = 6L * 60 * 60 * 1000
         private const val MAX_NODES_SCANNED_LAUNCHER = 1500
 
         /**

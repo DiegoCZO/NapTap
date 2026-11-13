@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 // Release signing key. Read from keystore.properties (local PC, not committed to git)
@@ -24,8 +25,16 @@ android {
         minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN requires Android 9
         targetSdk = 35
         // Bump both before every new release (versionCode must always go up).
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
+
+        // GitHub repo whose releases are checked for updates (must be public).
+        buildConfigField("String", "GITHUB_REPO", "\"DiegoCZO/NapTap\"")
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
     }
 
     signingConfigs {
@@ -71,4 +80,11 @@ android {
     }
 }
 
-// No dependencies: just the Android framework + Kotlin stdlib → very small APK.
+dependencies {
+    // Material 3 (Jetpack Compose) for the settings screen
+    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    implementation(composeBom)
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.activity:activity-compose:1.9.3")
+}
