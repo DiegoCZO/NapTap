@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 10+: sigue el modo claro/oscuro del sistema -->
+    <!-- Android 10+: follows the system light/dark mode -->
     <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.DayNight" />
 </resources>

@@ -18,7 +18,7 @@ import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 
-/** Pantalla de ajustes, armada por código para no depender de ninguna librería. */
+/** Settings screen, built in code so it doesn't depend on any library. */
 class MainActivity : Activity() {
 
     private lateinit var status: TextView
@@ -52,15 +52,15 @@ class MainActivity : Activity() {
         }
         root.addView(enableButton, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
-        root.addView(sectionTitle("Dónde funciona"))
-        root.addView(switch("Pantalla de inicio (launcher)", Prefs.KEY_HOME, true))
-        root.addView(switch("Pantalla de bloqueo", Prefs.KEY_LOCK, true))
-        root.addView(switch("Vibrar al apagar", Prefs.KEY_VIBRATE, false))
+        root.addView(sectionTitle("Where it works"))
+        root.addView(switch("Home screen (launcher)", Prefs.KEY_HOME, true))
+        root.addView(switch("Lock screen", Prefs.KEY_LOCK, true))
+        root.addView(switch("Vibrate when turning off", Prefs.KEY_VIBRATE, false))
 
-        root.addView(sectionTitle("Velocidad del doble toque"))
+        root.addView(sectionTitle("Double tap speed"))
         val timeoutLabel = TextView(this)
         val current = prefs.getInt(Prefs.KEY_TIMEOUT, Prefs.DEFAULT_TIMEOUT)
-        timeoutLabel.text = "Máximo entre toques: $current ms"
+        timeoutLabel.text = "Max time between taps: $current ms"
         root.addView(timeoutLabel)
         root.addView(SeekBar(this).apply {
             max = Prefs.MAX_TIMEOUT - Prefs.MIN_TIMEOUT
@@ -68,7 +68,7 @@ class MainActivity : Activity() {
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
                     val value = p + Prefs.MIN_TIMEOUT
-                    timeoutLabel.text = "Máximo entre toques: $value ms"
+                    timeoutLabel.text = "Max time between taps: $value ms"
                     prefs.edit().putInt(Prefs.KEY_TIMEOUT, value).apply()
                 }
                 override fun onStartTrackingTouch(sb: SeekBar?) {}
@@ -76,14 +76,14 @@ class MainActivity : Activity() {
             })
         }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
-        root.addView(sectionTitle("¿No te deja activarlo?"))
+        root.addView(sectionTitle("Can't turn it on?"))
         root.addView(TextView(this).apply {
-            text = "En Android 13+ las apps instaladas a mano tienen la accesibilidad " +
-                "\"restringida\". Abrí Info de la app → menú ⋮ (arriba a la derecha) → " +
-                "\"Permitir ajustes restringidos\", y después volvé a activarlo."
+            text = "On Android 13+, accessibility is \"restricted\" for sideloaded apps. " +
+                "Open App info → ⋮ menu (top right) → \"Allow restricted settings\", " +
+                "then try turning it on again."
         })
         root.addView(Button(this).apply {
-            text = "Abrir info de la app"
+            text = "Open app info"
             setOnClickListener {
                 startActivity(
                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
@@ -98,8 +98,8 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         val on = isServiceEnabled()
-        status.text = if (on) "✅ Servicio activo" else "⚠️ Servicio desactivado"
-        enableButton.text = if (on) "Ajustes de accesibilidad" else "Activar en Accesibilidad"
+        status.text = if (on) "✅ Service is on" else "⚠️ Service is off"
+        enableButton.text = if (on) "Accessibility settings" else "Turn on in Accessibility"
     }
 
     private fun isServiceEnabled(): Boolean {

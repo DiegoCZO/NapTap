@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "DobleToqueDormir"
+rootProject.name = "NapTap"
 include(":app")

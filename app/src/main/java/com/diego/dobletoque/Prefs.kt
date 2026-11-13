@@ -9,7 +9,7 @@ object Prefs {
     const val KEY_TIMEOUT = "double_tap_timeout"
     const val KEY_VIBRATE = "vibrate"
 
-    const val DEFAULT_TIMEOUT = 300   // ms máximos entre los dos toques
+    const val DEFAULT_TIMEOUT = 300   // max ms between the two taps
     const val MIN_TIMEOUT = 150
     const val MAX_TIMEOUT = 600
 

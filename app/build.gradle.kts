@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.diego.dobletoque"
-        minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN existe desde Android 9
+        minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN requires Android 9
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -20,7 +20,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Firmado con la clave debug para poder instalarlo directamente (uso personal).
+            // Signed with the debug key so it can be installed directly (personal use).
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -37,4 +37,4 @@ android {
     }
 }
 
-// Sin dependencias: solo el framework de Android + stdlib de Kotlin → APK muy liviano.
+// No dependencies: just the Android framework + Kotlin stdlib → very small APK.

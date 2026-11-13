@@ -15,22 +15,21 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 /**
- * Cómo funciona:
+ * How it works:
  *
- * 1. Se agrega una ventana de accesibilidad de 1x1 px con FLAG_WATCH_OUTSIDE_TOUCH.
- *    Android le manda un ACTION_OUTSIDE cada vez que el dedo toca la pantalla fuera de
- *    ella (o sea, en cualquier lado), sin bloquear ni consumir el toque: el launcher y
- *    la lockscreen siguen funcionando normal. Por privacidad Android no da las
- *    coordenadas, solo el momento del toque, que es lo único que necesitamos.
+ * 1. A 1x1 px accessibility overlay with FLAG_WATCH_OUTSIDE_TOUCH is added. Android
+ *    sends it an ACTION_OUTSIDE every time a finger touches the screen outside of it
+ *    (i.e. anywhere), without blocking or consuming the touch: the launcher and the
+ *    lock screen keep working normally. For privacy Android doesn't provide the
+ *    coordinates, only the time of the touch, which is all we need.
  *
- * 2. Si llegan dos toques separados por menos de X ms, se mira dónde estamos:
- *      - pantalla bloqueada (keyguard)  → ¿está activado "lockscreen"? ¿no se está
- *        escribiendo el PIN/contraseña?
- *      - desbloqueado → ¿la ventana activa es el launcher por defecto?
+ * 2. When two touches arrive less than X ms apart, we check where we are:
+ *      - locked (keyguard) → is "lock screen" enabled? is the PIN/password pad hidden?
+ *      - unlocked → is the active window the default launcher, with the app drawer closed?
  *
- * 3. Si corresponde, performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) apaga la pantalla.
- *    Esto bloquea igual que el botón de encendido, así que la huella / desbloqueo facial
- *    siguen funcionando (no es como "device admin", que fuerza el PIN).
+ * 3. If so, performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) turns the screen off.
+ *    This locks just like the power button, so fingerprint / face unlock keep working
+ *    (unlike "device admin", which forces the PIN).
  */
 class DoubleTapService : AccessibilityService() {
 
@@ -68,7 +67,7 @@ class DoubleTapService : AccessibilityService() {
             windowManager?.addView(view, params)
             sensor = view
         } catch (_: Exception) {
-            // Si falla, el servicio queda inactivo pero no rompe nada.
+            // If this fails the service stays idle, but nothing breaks.
         }
     }
 
@@ -98,14 +97,14 @@ class DoubleTapService : AccessibilityService() {
         val root = rootInActiveWindow ?: return false
         val activePackage = root.packageName?.toString() ?: return false
         if (activePackage !in launcherPackages()) return false
-        // Con el cajón de aplicaciones abierto no se apaga.
+        // Don't turn the screen off while the app drawer is open.
         return !isAppDrawerOpen(root)
     }
 
     /**
-     * ¿Está abierto el cajón de apps? Busca, entre las vistas visibles en pantalla, las
-     * del cajón de Launcher3 / Pixel Launcher. Cerrado, el cajón queda fuera de la
-     * pantalla u oculto para accesibilidad, así que isVisibleToUser da false.
+     * Is the app drawer open? Looks for the Launcher3 / Pixel Launcher drawer views among
+     * the views visible on screen. When closed, the drawer is off-screen or hidden from
+     * accessibility, so isVisibleToUser returns false.
      */
     private fun isAppDrawerOpen(root: AccessibilityNodeInfo): Boolean {
         val budget = intArrayOf(MAX_NODES_SCANNED_LAUNCHER)
@@ -125,23 +124,23 @@ class DoubleTapService : AccessibilityService() {
         return false
     }
 
-    /** Paquete(s) del launcher. Se consulta en cada doble toque por si cambiás de launcher. */
+    /** Launcher package(s). Queried on every double tap in case the launcher changes. */
     private fun launcherPackages(): Set<String> {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val default = packageManager
             .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
             ?.activityInfo?.packageName
-        // "android" = selector del sistema: no hay launcher por defecto elegido todavía.
+        // "android" = system chooser: no default launcher has been picked yet.
         if (default != null && default != "android") return setOf(default)
         return packageManager.queryIntentActivities(intent, 0)
             .map { it.activityInfo.packageName }
-            .filter { it != "com.android.settings" }   // FallbackHome de Ajustes
+            .filter { it != "com.android.settings" }   // Settings' FallbackHome
             .toSet()
     }
 
     /**
-     * ¿Está a la vista el teclado del PIN / contraseña / patrón? Si es así no hacemos
-     * nada, para que escribir el PIN rápido no apague la pantalla.
+     * Is the PIN / password / pattern pad showing? If so, do nothing, so that typing the
+     * PIN quickly doesn't turn the screen off.
      */
     private fun isBouncerShowing(): Boolean {
         val roots = try {
@@ -177,7 +176,7 @@ class DoubleTapService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         when (event?.eventType) {
-            // Si el primer toque abrió una app / notificación / atajo, no cuenta como doble toque.
+            // If the first tap opened an app / notification / shortcut, it's not a double tap.
             AccessibilityEvent.TYPE_VIEW_CLICKED,
             AccessibilityEvent.TYPE_VIEW_LONG_CLICKED -> lastTapTime = 0L
         }
@@ -201,17 +200,17 @@ class DoubleTapService : AccessibilityService() {
     }
 
     companion object {
-        /** Ignora toques casi simultáneos (dos dedos a la vez). */
+        /** Ignore near-simultaneous touches (two fingers at once). */
         private const val MIN_GAP_MS = 40L
         private const val MAX_NODES_SCANNED = 600
         private const val MAX_NODES_SCANNED_LAUNCHER = 1500
 
-        /** IDs del cajón de apps en Launcher3 / Pixel Launcher (y launchers basados en él). */
+        /** App drawer view IDs in Launcher3 / Pixel Launcher (and launchers based on it). */
         private val DRAWER_IDS = setOf(
             "apps_view", "apps_list_view", "all_apps_header", "search_container_all_apps"
         )
 
-        /** IDs típicos del PIN/contraseña/patrón en AOSP, Pixel, Samsung, Xiaomi… */
+        /** Common PIN/password/pattern view IDs on AOSP, Pixel, Samsung, Xiaomi… */
         private val BOUNCER_ID_HINTS = listOf(
             "bouncer", "pinentry", "pin_view", "password_view", "passwordentry",
             "pattern_view", "lockpatternview", "sim_pin", "sim_puk", "key_enter",

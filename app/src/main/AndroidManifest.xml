@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Necesario en Android 11+ para saber cuál es el launcher por defecto -->
+    <!-- Required on Android 11+ to find out which launcher is the default -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />

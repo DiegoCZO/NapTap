@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  - typeViewClicked / typeViewLongClicked: si el primer toque abre un ícono o una
-    notificación, se cancela el doble toque.
-  - flagRetrieveInteractiveWindows + canRetrieveWindowContent: para saber si la
-    ventana activa es el launcher y si en la lockscreen se muestra el PIN/contraseña.
-  - flagReportViewIds: para reconocer los IDs de la vista del PIN/patrón.
+  - typeViewClicked / typeViewLongClicked: if the first tap opens an icon or a
+    notification, the double tap is cancelled.
+  - flagRetrieveInteractiveWindows + canRetrieveWindowContent: to know whether the active
+    window is the launcher (and whether its app drawer is open), and whether the lock
+    screen is showing the PIN/password pad.
+  - flagReportViewIds: to recognise the PIN/pattern and app drawer view IDs.
 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeViewClicked|typeViewLongClicked"
