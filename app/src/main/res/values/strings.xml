@@ -1,5 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Nap Tap</string>
+    <string name="app_name" translatable="false">Nap Tap</string>
     <string name="service_description">Turns the screen off with a double tap on the home screen and/or the lock screen. It doesn\'t read or store anything you type: it only detects when each tap happens and locks the phone.</string>
+
+    <!-- Status -->
+    <string name="status_on_title">Nap Tap is on</string>
+    <string name="status_on_body">Double tap the home or lock screen to turn the screen off.</string>
+    <string name="status_off_title">Nap Tap is off</string>
+    <string name="status_off_body">Turn on the Nap Tap accessibility service to start.</string>
+    <string name="btn_accessibility_settings">Accessibility settings</string>
+    <string name="btn_turn_on">Turn on</string>
+
+    <!-- Update card -->
+    <string name="update_available_title">Update available: %1$s</string>
+    <string name="update_you_have">You have %1$s.</string>
+    <string name="btn_download">Download</string>
+
+    <!-- Where it works -->
+    <string name="section_where">Where it works</string>
+    <string name="home_title">Home screen</string>
+    <string name="home_summary">Your default launcher</string>
+    <string name="lock_title">Lock screen</string>
+    <string name="lock_summary">Ignored while the PIN pad is showing</string>
+
+    <!-- Options -->
+    <string name="section_options">Options</string>
+    <string name="pocket_title">Pocket protection</string>
+    <string name="pocket_summary">Do nothing if the proximity sensor is covered</string>
+    <string name="vibrate_title">Vibrate</string>
+    <string name="vibrate_summary">Short vibration when the screen turns off</string>
+    <string name="language_title">Language</string>
+    <string name="language_system">System default</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_spanish" translatable="false">Español</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Speed -->
+    <string name="section_speed">Double tap speed</string>
+    <string name="speed_label">Max time between taps: %1$d ms</string>
+    <string name="speed_hint">Lower = you need to tap faster</string>
+
+    <!-- Restricted settings -->
+    <string name="section_restricted">Can\'t turn it on?</string>
+    <string name="restricted_body">On Android 13+, accessibility is restricted for apps installed outside the Play Store. Open App info → ⋮ menu (top right) → Allow restricted settings, then try again.</string>
+    <string name="btn_app_info">Open app info</string>
+
+    <!-- About -->
+    <string name="section_about">About</string>
+    <string name="version_label">Version %1$s</string>
+    <string name="checking">Checking…</string>
+    <string name="check_failed">Couldn\'t check (no internet or no releases yet)</string>
+    <string name="check_available">Version %1$s is available</string>
+    <string name="check_up_to_date">You\'re up to date</string>
+    <string name="btn_check_updates">Check for updates</string>
+    <string name="btn_github" translatable="false">GitHub</string>
 </resources>

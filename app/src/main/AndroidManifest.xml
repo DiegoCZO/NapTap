@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Update checker: reads the latest GitHub release and notifies -->
+    <!-- "Check for updates": reads the latest GitHub release -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Required on Android 11+ to find out which launcher is the default -->
     <queries>
@@ -17,6 +16,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:theme="@style/AppTheme">
 
         <activity

@@ -9,9 +9,6 @@ object Prefs {
     const val KEY_TIMEOUT = "double_tap_timeout"
     const val KEY_VIBRATE = "vibrate"
     const val KEY_POCKET = "pocket_protection"
-    const val KEY_UPDATE_NOTIFY = "update_notify"
-    const val KEY_LAST_UPDATE_CHECK = "last_update_check"
-    const val KEY_LAST_NOTIFIED_VERSION = "last_notified_version"
 
     const val DEFAULT_TIMEOUT = 300   // max ms between the two taps
     const val MIN_TIMEOUT = 150

@@ -1,20 +1,19 @@
 package com.diego.dobletoque
 
-import android.Manifest
+import android.app.LocaleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
 import android.provider.Settings
 import android.text.TextUtils
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,6 +37,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -55,10 +56,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -125,21 +128,8 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
     var updateMessage by remember { mutableStateOf<String?>(null) }
     var checking by remember { mutableStateOf(false) }
 
-    val notificationPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { }
-    fun askNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    // On open: check for updates and, if update notifications are on, ask for permission.
+    // On open: silently check for updates (shows a card only if there is a new version).
     LaunchedEffect(Unit) {
-        if (prefs.getBoolean(Prefs.KEY_UPDATE_NOTIFY, true)) askNotificationPermissionIfNeeded()
         val latest = UpdateChecker.fetchLatestAsync()
         if (latest != null && latest.isNewer) update = latest
     }
@@ -164,34 +154,40 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
 
             update?.let { release -> UpdateCard(release) }
 
-            Section("Where it works") {
-                PrefSwitch("Home screen", "Your default launcher", Prefs.KEY_HOME, true)
+            Section(stringResource(R.string.section_where)) {
+                PrefSwitch(
+                    stringResource(R.string.home_title), stringResource(R.string.home_summary),
+                    Prefs.KEY_HOME, true
+                )
                 HorizontalDivider()
-                PrefSwitch("Lock screen", "Ignored while the PIN pad is showing", Prefs.KEY_LOCK, true)
+                PrefSwitch(
+                    stringResource(R.string.lock_title), stringResource(R.string.lock_summary),
+                    Prefs.KEY_LOCK, true
+                )
             }
 
-            Section("Options") {
+            Section(stringResource(R.string.section_options)) {
                 PrefSwitch(
-                    "Pocket protection",
-                    "Do nothing if the proximity sensor is covered",
+                    stringResource(R.string.pocket_title), stringResource(R.string.pocket_summary),
                     Prefs.KEY_POCKET, true
                 )
                 HorizontalDivider()
-                PrefSwitch("Vibrate", "Short vibration when the screen turns off", Prefs.KEY_VIBRATE, false)
-                HorizontalDivider()
                 PrefSwitch(
-                    "Update notifications",
-                    "Check GitHub once a day for a new version",
-                    Prefs.KEY_UPDATE_NOTIFY, true
-                ) { on -> if (on) askNotificationPermissionIfNeeded() }
+                    stringResource(R.string.vibrate_title), stringResource(R.string.vibrate_summary),
+                    Prefs.KEY_VIBRATE, false
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    HorizontalDivider()
+                    LanguageItem()
+                }
             }
 
-            Section("Double tap speed") {
+            Section(stringResource(R.string.section_speed)) {
                 var timeout by remember {
                     mutableFloatStateOf(prefs.getInt(Prefs.KEY_TIMEOUT, Prefs.DEFAULT_TIMEOUT).toFloat())
                 }
                 Column(Modifier.padding(16.dp)) {
-                    Text("Max time between taps: ${timeout.roundToInt()} ms")
+                    Text(stringResource(R.string.speed_label, timeout.roundToInt()))
                     Slider(
                         value = timeout,
                         onValueChange = { timeout = it },
@@ -202,28 +198,31 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                         steps = (Prefs.MAX_TIMEOUT - Prefs.MIN_TIMEOUT) / 25 - 1
                     )
                     Text(
-                        "Lower = you need to tap faster",
+                        stringResource(R.string.speed_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Section("Can't turn it on?") {
+            Section(stringResource(R.string.section_restricted)) {
                 Column(Modifier.padding(16.dp)) {
                     Text(
-                        "On Android 13+, accessibility is restricted for apps installed " +
-                            "outside the Play Store. Open App info → ⋮ menu (top right) → " +
-                            "Allow restricted settings, then try again.",
+                        stringResource(R.string.restricted_body),
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    TextButton(onClick = { openAppInfo(context) }) { Text("Open app info") }
+                    TextButton(onClick = { openAppInfo(context) }) {
+                        Text(stringResource(R.string.btn_app_info))
+                    }
                 }
             }
 
-            Section("About") {
+            Section(stringResource(R.string.section_about)) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        stringResource(R.string.version_label, BuildConfig.VERSION_NAME),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                     updateMessage?.let {
                         Text(
                             it,
@@ -236,20 +235,23 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                             enabled = !checking,
                             onClick = {
                                 checking = true
-                                updateMessage = "Checking…"
+                                updateMessage = context.getString(R.string.checking)
                                 scope.launch {
                                     val latest = UpdateChecker.fetchLatestAsync()
                                     checking = false
                                     updateMessage = when {
-                                        latest == null -> "Couldn't check (no internet or no releases yet)"
-                                        latest.isNewer -> { update = latest; "Version ${latest.version} is available" }
-                                        else -> "You're up to date"
+                                        latest == null -> context.getString(R.string.check_failed)
+                                        latest.isNewer -> {
+                                            update = latest
+                                            context.getString(R.string.check_available, latest.version)
+                                        }
+                                        else -> context.getString(R.string.check_up_to_date)
                                     }
                                 }
                             }
-                        ) { Text("Check for updates") }
+                        ) { Text(stringResource(R.string.btn_check_updates)) }
                         TextButton(onClick = { openUrl(context, UpdateChecker.repoUrl) }) {
-                            Text("GitHub")
+                            Text(stringResource(R.string.btn_github))
                         }
                     }
                 }
@@ -275,20 +277,19 @@ private fun StatusCard(enabled: Boolean) {
     ) {
         Column(Modifier.padding(20.dp)) {
             Text(
-                if (enabled) "Nap Tap is on" else "Nap Tap is off",
+                stringResource(if (enabled) R.string.status_on_title else R.string.status_off_title),
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                if (enabled) "Double tap the home or lock screen to turn the screen off."
-                else "Turn on the Nap Tap accessibility service to start.",
+                stringResource(if (enabled) R.string.status_on_body else R.string.status_off_body),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
             )
             val open = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
             if (enabled) {
-                FilledTonalButton(onClick = open) { Text("Accessibility settings") }
+                FilledTonalButton(onClick = open) { Text(stringResource(R.string.btn_accessibility_settings)) }
             } else {
-                Button(onClick = open) { Text("Turn on") }
+                Button(onClick = open) { Text(stringResource(R.string.btn_turn_on)) }
             }
         }
     }
@@ -302,13 +303,18 @@ private fun UpdateCard(release: UpdateChecker.Release) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
     ) {
         Column(Modifier.padding(20.dp)) {
-            Text("Update available: ${release.version}", style = MaterialTheme.typography.titleMedium)
             Text(
-                "You have ${BuildConfig.VERSION_NAME}.",
+                stringResource(R.string.update_available_title, release.version),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                stringResource(R.string.update_you_have, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
             )
-            Button(onClick = { openUrl(context, release.downloadUrl) }) { Text("Download") }
+            Button(onClick = { openUrl(context, release.downloadUrl) }) {
+                Text(stringResource(R.string.btn_download))
+            }
         }
     }
 }
@@ -356,8 +362,77 @@ private fun PrefSwitch(
     )
 }
 
+/**
+ * Per-app language (Android 13+). Changing it recreates the screen in the new language;
+ * it's the same setting as Android Settings → Apps → Nap Tap → Language.
+ */
+@Composable
+private fun LanguageItem() {
+    val context = LocalContext.current
+    val options = listOf(
+        "" to stringResource(R.string.language_system),
+        "en" to stringResource(R.string.language_english),
+        "es" to stringResource(R.string.language_spanish)
+    )
+    var current by remember { mutableStateOf(currentAppLanguage(context)) }
+    var showDialog by remember { mutableStateOf(false) }
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.language_title)) },
+        supportingContent = { Text(options.firstOrNull { it.first == current }?.second ?: options[0].second) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.clickable { showDialog = true }
+    )
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(stringResource(R.string.language_title)) },
+            text = {
+                Column {
+                    options.forEach { (tag, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showDialog = false
+                                    if (tag != current) {
+                                        current = tag
+                                        setAppLanguage(context, tag)
+                                    }
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(selected = tag == current, onClick = null)
+                            Text(label, modifier = Modifier.padding(start = 12.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
+            }
+        )
+    }
+}
+
 // ---------------------------------------------------------------------------------------
 // Helpers
+
+/** "" = system default, otherwise "en" / "es". */
+private fun currentAppLanguage(context: Context): String {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return ""
+    val locales = context.getSystemService(LocaleManager::class.java)?.applicationLocales
+    return if (locales == null || locales.isEmpty) "" else locales[0].language
+}
+
+private fun setAppLanguage(context: Context, tag: String) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    context.getSystemService(LocaleManager::class.java)?.applicationLocales =
+        if (tag.isEmpty()) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
+}
 
 private fun openUrl(context: Context, url: String) {
     try {

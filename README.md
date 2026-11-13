@@ -12,7 +12,8 @@ and/or the **lock screen**, using an accessibility service. Requires Android 9 o
 - **Pocket protection**: does nothing if the proximity sensor is covered.
 - Optional vibration.
 - Adjustable double tap speed.
-- **Update notifications**: checks this repo's GitHub Releases once a day.
+- **Check for updates** button (reads this repo's GitHub Releases).
+- English and Spanish, with an in-app language switch (Android 13+).
 - Material 3 settings screen with the wallpaper's dynamic colours.
 - Themed icon (Android 13+).
 

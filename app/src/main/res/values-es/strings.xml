@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_description">Apaga la pantalla con un doble toque en la pantalla de inicio y/o en la pantalla de bloqueo. No lee ni guarda nada de lo que escribes: solo detecta el momento de cada toque y bloquea el teléfono.</string>
+
+    <!-- Estado -->
+    <string name="status_on_title">Nap Tap está activado</string>
+    <string name="status_on_body">Toca dos veces la pantalla de inicio o de bloqueo para apagar la pantalla.</string>
+    <string name="status_off_title">Nap Tap está desactivado</string>
+    <string name="status_off_body">Activa el servicio de accesibilidad de Nap Tap para empezar.</string>
+    <string name="btn_accessibility_settings">Ajustes de accesibilidad</string>
+    <string name="btn_turn_on">Activar</string>
+
+    <!-- Actualización -->
+    <string name="update_available_title">Actualización disponible: %1$s</string>
+    <string name="update_you_have">Tienes la %1$s.</string>
+    <string name="btn_download">Descargar</string>
+
+    <!-- Dónde funciona -->
+    <string name="section_where">Dónde funciona</string>
+    <string name="home_title">Pantalla de inicio</string>
+    <string name="home_summary">Tu launcher predeterminado</string>
+    <string name="lock_title">Pantalla de bloqueo</string>
+    <string name="lock_summary">Se ignora mientras se muestra el teclado del PIN</string>
+
+    <!-- Opciones -->
+    <string name="section_options">Opciones</string>
+    <string name="pocket_title">Protección de bolsillo</string>
+    <string name="pocket_summary">No hace nada si el sensor de proximidad está tapado</string>
+    <string name="vibrate_title">Vibrar</string>
+    <string name="vibrate_summary">Vibración corta al apagar la pantalla</string>
+    <string name="language_title">Idioma</string>
+    <string name="language_system">Idioma del sistema</string>
+    <string name="btn_cancel">Cancelar</string>
+
+    <!-- Velocidad -->
+    <string name="section_speed">Velocidad del doble toque</string>
+    <string name="speed_label">Máximo entre toques: %1$d ms</string>
+    <string name="speed_hint">Menos = hay que tocar más rápido</string>
+
+    <!-- Ajustes restringidos -->
+    <string name="section_restricted">¿No se puede activar?</string>
+    <string name="restricted_body">En Android 13+, la accesibilidad está restringida para las apps instaladas fuera de Play Store. Abre Info de la app → menú ⋮ (arriba a la derecha) → Permitir ajustes restringidos, y vuelve a intentarlo.</string>
+    <string name="btn_app_info">Abrir info de la app</string>
+
+    <!-- Acerca de -->
+    <string name="section_about">Acerca de</string>
+    <string name="version_label">Versión %1$s</string>
+    <string name="checking">Buscando…</string>
+    <string name="check_failed">No se pudo comprobar (sin internet o todavía no hay releases)</string>
+    <string name="check_available">La versión %1$s está disponible</string>
+    <string name="check_up_to_date">Tienes la última versión</string>
+    <string name="btn_check_updates">Buscar actualizaciones</string>
+</resources>

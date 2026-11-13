@@ -49,19 +49,10 @@ class DoubleTapService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private var proximityListener: SensorEventListener? = null
 
-    /** Checks GitHub for a new version every few hours (at most one real check a day). */
-    private val updateCheck = object : Runnable {
-        override fun run() {
-            UpdateNotifier.checkIfDue(this@DoubleTapService)
-            handler.postDelayed(this, UPDATE_CHECK_INTERVAL_MS)
-        }
-    }
-
     override fun onServiceConnected() {
         super.onServiceConnected()
         windowManager = getSystemService(WindowManager::class.java)
         addTouchSensor()
-        handler.postDelayed(updateCheck, 60_000L)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -277,7 +268,6 @@ class DoubleTapService : AccessibilityService() {
         private const val MIN_GAP_MS = 40L
         private const val MAX_NODES_SCANNED = 600
         private const val PROXIMITY_TIMEOUT_MS = 300L
-        private const val UPDATE_CHECK_INTERVAL_MS = 6L * 60 * 60 * 1000
         private const val MAX_NODES_SCANNED_LAUNCHER = 1500
 
         /**
