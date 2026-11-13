@@ -1,7 +1,19 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+
+// Release signing key. Read from keystore.properties (local PC, not committed to git)
+// or from environment variables (GitHub Actions, filled from the repo secrets).
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(prop: String, env: String): String? =
+    keystoreProps.getProperty(prop) ?: System.getenv(env)
+val hasReleaseKey = signingValue("storeFile", "NAPTAP_KEYSTORE_PATH") != null
 
 android {
     namespace = "com.diego.dobletoque"
@@ -11,8 +23,20 @@ android {
         applicationId = "com.diego.dobletoque"
         minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN requires Android 9
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // Bump both before every new release (versionCode must always go up).
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseKey) {
+                storeFile = file(signingValue("storeFile", "NAPTAP_KEYSTORE_PATH")!!)
+                storePassword = signingValue("storePassword", "NAPTAP_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "NAPTAP_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "NAPTAP_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -20,8 +44,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Signed with the debug key so it can be installed directly (personal use).
-            signingConfig = signingConfigs.getByName("debug")
+            // Own key if available, otherwise the debug key (still installable).
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
         }
     }
 
@@ -34,6 +58,16 @@ android {
     }
     lint {
         abortOnError = false
+    }
+
+    // APK name: Nap-Tap-1.1.apk (release) / Nap-Tap-1.1-debug.apk (debug)
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val suffix = if (variant.buildType.name == "release") "" else "-${variant.buildType.name}"
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+                "Nap-Tap-${variant.versionName}$suffix.apk"
+        }
     }
 }
 
