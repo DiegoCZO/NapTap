@@ -13,8 +13,8 @@ service. Requires Android 9 or later.
   each touch.
 - Two touches within N ms (configurable, 300 ms by default) trigger the following checks:
   - if the device is locked and the PIN/password pad is not showing → screen off;
-  - if the device is unlocked, the active window is the default launcher and the app
-    drawer is closed → screen off.
+  - if the device is unlocked, the active window is the default launcher and neither
+    the app drawer nor the recent apps screen is open → screen off.
 - If the first tap opens an icon, a notification, etc. (a *click* event), the double tap
   is cancelled.
 - The screen is turned off with `GLOBAL_ACTION_LOCK_SCREEN`, just like the power button,
@@ -26,6 +26,6 @@ service. Requires Android 9 or later.
 - On the lock screen, PIN detection relies on common view IDs (AOSP, Pixel, Samsung,
   Xiaomi…). If typing your PIN quickly turns the screen off, add the right ID to
   `BOUNCER_ID_HINTS` in `DoubleTapService.kt`.
-- App drawer detection uses Launcher3 / Pixel Launcher view IDs (`DRAWER_IDS`). Other
-  launchers may need their own IDs.
+- App drawer and recent apps detection uses Launcher3 / Pixel Launcher view IDs
+  (`LAUNCHER_OVERLAY_IDS`). Other launchers may need their own IDs.
 - The APK is signed with the *debug* key: fine for personal use, not for the Play Store.

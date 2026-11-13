@@ -97,18 +97,18 @@ class DoubleTapService : AccessibilityService() {
         val root = rootInActiveWindow ?: return false
         val activePackage = root.packageName?.toString() ?: return false
         if (activePackage !in launcherPackages()) return false
-        // Don't turn the screen off while the app drawer is open.
-        return !isAppDrawerOpen(root)
+        // Don't turn the screen off while the app drawer or recent apps are open.
+        return !isLauncherOverlayOpen(root)
     }
 
     /**
-     * Is the app drawer open? Looks for the Launcher3 / Pixel Launcher drawer views among
-     * the views visible on screen. When closed, the drawer is off-screen or hidden from
-     * accessibility, so isVisibleToUser returns false.
+     * Is the app drawer or the recent apps screen open? Looks for their Launcher3 /
+     * Pixel Launcher views among the views visible on screen. When closed, they are
+     * off-screen or hidden, so isVisibleToUser returns false.
      */
-    private fun isAppDrawerOpen(root: AccessibilityNodeInfo): Boolean {
+    private fun isLauncherOverlayOpen(root: AccessibilityNodeInfo): Boolean {
         val budget = intArrayOf(MAX_NODES_SCANNED_LAUNCHER)
-        return hasVisibleId(root, DRAWER_IDS, 0, budget)
+        return hasVisibleId(root, LAUNCHER_OVERLAY_IDS, 0, budget)
     }
 
     private fun hasVisibleId(
@@ -205,9 +205,15 @@ class DoubleTapService : AccessibilityService() {
         private const val MAX_NODES_SCANNED = 600
         private const val MAX_NODES_SCANNED_LAUNCHER = 1500
 
-        /** App drawer view IDs in Launcher3 / Pixel Launcher (and launchers based on it). */
-        private val DRAWER_IDS = setOf(
-            "apps_view", "apps_list_view", "all_apps_header", "search_container_all_apps"
+        /**
+         * View IDs in Launcher3 / Pixel Launcher (and launchers based on it) where a double
+         * tap must be ignored: the app drawer and the recent apps (overview) screen.
+         */
+        private val LAUNCHER_OVERLAY_IDS = setOf(
+            // App drawer
+            "apps_view", "apps_list_view", "all_apps_header", "search_container_all_apps",
+            // Recent apps
+            "overview_panel", "overview_actions_view", "clear_all"
         )
 
         /** Common PIN/password/pattern view IDs on AOSP, Pixel, Samsung, Xiaomi… */
