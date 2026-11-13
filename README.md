@@ -21,6 +21,11 @@ and/or the **lock screen**, using an accessibility service. Requires Android 9 o
 - Optional hidden app icon: settings stay reachable from Settings → Apps → Nap Tap →
   Additional settings in the app, or from Accessibility → Nap Tap.
 
+## First install
+Android 10+ only lets an app hide its icon completely if the icon was disabled from the
+start, so **Nap Tap installs without an icon**. Turn it on in Settings → Accessibility →
+Nap Tap (you have to do that anyway) and the icon appears in the app drawer.
+
 ## How it works
 - A 1×1 px accessibility overlay with `FLAG_WATCH_OUTSIDE_TOUCH` receives an
   `ACTION_OUTSIDE` event for every touch on the screen without blocking it, so the

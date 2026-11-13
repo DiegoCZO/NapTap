@@ -53,6 +53,7 @@ class DoubleTapService : AccessibilityService() {
         super.onServiceConnected()
         windowManager = getSystemService(WindowManager::class.java)
         addTouchSensor()
+        LauncherIcon.showOnFirstRun(this)
     }
 
     @SuppressLint("ClickableViewAccessibility")

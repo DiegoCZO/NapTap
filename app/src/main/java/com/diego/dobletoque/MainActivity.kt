@@ -77,6 +77,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        LauncherIcon.showOnFirstRun(this)
         setContent {
             NapTapTheme {
                 SettingsScreen(serviceEnabled = serviceEnabled)
