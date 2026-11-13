@@ -95,8 +95,34 @@ class DoubleTapService : AccessibilityService() {
             return lockOn && !isBouncerShowing()
         }
         if (!homeOn) return false
-        val activePackage = rootInActiveWindow?.packageName?.toString() ?: return false
-        return activePackage in launcherPackages()
+        val root = rootInActiveWindow ?: return false
+        val activePackage = root.packageName?.toString() ?: return false
+        if (activePackage !in launcherPackages()) return false
+        // Con el cajón de aplicaciones abierto no se apaga.
+        return !isAppDrawerOpen(root)
+    }
+
+    /**
+     * ¿Está abierto el cajón de apps? Busca, entre las vistas visibles en pantalla, las
+     * del cajón de Launcher3 / Pixel Launcher. Cerrado, el cajón queda fuera de la
+     * pantalla u oculto para accesibilidad, así que isVisibleToUser da false.
+     */
+    private fun isAppDrawerOpen(root: AccessibilityNodeInfo): Boolean {
+        val budget = intArrayOf(MAX_NODES_SCANNED_LAUNCHER)
+        return hasVisibleId(root, DRAWER_IDS, 0, budget)
+    }
+
+    private fun hasVisibleId(
+        node: AccessibilityNodeInfo, ids: Set<String>, depth: Int, budget: IntArray
+    ): Boolean {
+        if (depth > 40 || budget[0]-- <= 0) return false
+        val id = node.viewIdResourceName?.substringAfter(":id/")?.lowercase()
+        if (id != null && id in ids && node.isVisibleToUser) return true
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            if (hasVisibleId(child, ids, depth + 1, budget)) return true
+        }
+        return false
     }
 
     /** Paquete(s) del launcher. Se consulta en cada doble toque por si cambiás de launcher. */
@@ -178,6 +204,12 @@ class DoubleTapService : AccessibilityService() {
         /** Ignora toques casi simultáneos (dos dedos a la vez). */
         private const val MIN_GAP_MS = 40L
         private const val MAX_NODES_SCANNED = 600
+        private const val MAX_NODES_SCANNED_LAUNCHER = 1500
+
+        /** IDs del cajón de apps en Launcher3 / Pixel Launcher (y launchers basados en él). */
+        private val DRAWER_IDS = setOf(
+            "apps_view", "apps_list_view", "all_apps_header", "search_container_all_apps"
+        )
 
         /** IDs típicos del PIN/contraseña/patrón en AOSP, Pixel, Samsung, Xiaomi… */
         private val BOUNCER_ID_HINTS = listOf(
