@@ -68,4 +68,8 @@
     <string name="permission_hint">Allow Nap Tap to install apps, then come back and tap Install again.</string>
     <string name="download_failed">The download failed. Check your connection and try again.</string>
     <string name="install_failed">Couldn\'t install the update. %1$s</string>
+
+    <!-- Hide icon -->
+    <string name="hide_icon_title">Hide app icon</string>
+    <string name="hide_icon_summary">Open these settings from Settings → Apps → Nap Tap → Additional settings in the app, or from Accessibility → Nap Tap.</string>
 </resources>

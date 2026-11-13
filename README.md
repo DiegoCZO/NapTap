@@ -18,6 +18,8 @@ and/or the **lock screen**, using an accessibility service. Requires Android 9 o
 - English and Spanish, with an in-app language switch (Android 13+).
 - Material 3 settings screen with the wallpaper's dynamic colours.
 - Themed icon (Android 13+).
+- Optional hidden app icon: settings stay reachable from Settings → Apps → Nap Tap →
+  Additional settings in the app, or from Accessibility → Nap Tap.
 
 ## How it works
 - A 1×1 px accessibility overlay with `FLAG_WATCH_OUTSIDE_TOUCH` receives an

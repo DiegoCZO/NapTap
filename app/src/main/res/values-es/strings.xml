@@ -64,4 +64,8 @@
     <string name="permission_hint">Permite que Nap Tap instale apps, vuelve aquí y toca Instalar otra vez.</string>
     <string name="download_failed">Falló la descarga. Revisa la conexión y vuelve a intentarlo.</string>
     <string name="install_failed">No se pudo instalar la actualización. %1$s</string>
+
+    <!-- Ocultar ícono -->
+    <string name="hide_icon_title">Ocultar ícono de la app</string>
+    <string name="hide_icon_summary">Abre estos ajustes desde Ajustes → Apps → Nap Tap → Ajustes adicionales de la app, o desde Accesibilidad → Nap Tap.</string>
 </resources>

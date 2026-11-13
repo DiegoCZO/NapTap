@@ -24,11 +24,25 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
+            <!-- Settings → Apps → Nap Tap → "Additional settings in the app" -->
+            <intent-filter>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- App drawer icon. A separate alias so it can be hidden ("Hide app icon")
+             without disabling the settings screen itself. -->
+        <activity-alias
+            android:name=".LauncherAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <receiver
             android:name=".InstallResultReceiver"
