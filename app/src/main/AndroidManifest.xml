@@ -3,6 +3,8 @@
 
     <!-- "Check for updates": reads the latest GitHub release -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- In-app update: lets Nap Tap hand the downloaded APK to Android's installer -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Required on Android 11+ to find out which launcher is the default -->
     <queries>
@@ -27,6 +29,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".InstallResultReceiver"
+            android:exported="false" />
 
         <service
             android:name=".DoubleTapService"

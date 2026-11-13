@@ -14,7 +14,6 @@
     <!-- Update card -->
     <string name="update_available_title">Update available: %1$s</string>
     <string name="update_you_have">You have %1$s.</string>
-    <string name="btn_download">Download</string>
 
     <!-- Where it works -->
     <string name="section_where">Where it works</string>
@@ -54,4 +53,19 @@
     <string name="check_up_to_date">You\'re up to date</string>
     <string name="btn_check_updates">Check for updates</string>
     <string name="btn_github" translatable="false">GitHub</string>
+
+    <!-- Update popup -->
+    <string name="btn_update">Update</string>
+    <string name="new_version_title">New version: %1$s</string>
+    <string name="whats_new">What\'s new</string>
+    <string name="no_notes">No details for this version.</string>
+    <string name="btn_install">Install</string>
+    <string name="btn_later">Later</string>
+    <string name="btn_open_browser">Download in browser</string>
+    <string name="downloading">Downloading… %1$d%%</string>
+    <string name="downloading_unknown">Downloading…</string>
+    <string name="installing_hint">Confirm the update in the Android window.</string>
+    <string name="permission_hint">Allow Nap Tap to install apps, then come back and tap Install again.</string>
+    <string name="download_failed">The download failed. Check your connection and try again.</string>
+    <string name="install_failed">Couldn\'t install the update. %1$s</string>
 </resources>

@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # full history, to build the changelog from commits
 
       - uses: actions/setup-java@v4
         with:
@@ -52,5 +54,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Changelog = commit messages since the previous tag
+          PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          if [ -n "$PREV" ]; then RANGE="$PREV..$GITHUB_REF_NAME"; else RANGE="$GITHUB_REF_NAME"; fi
+          git log "$RANGE" --no-merges --pretty="- %s" > notes.md
           gh release create "$GITHUB_REF_NAME" app/build/outputs/apk/release/*.apk \
-            --title "Nap Tap ${GITHUB_REF_NAME}" --generate-notes
+            --title "Nap Tap ${GITHUB_REF_NAME}" --notes-file notes.md

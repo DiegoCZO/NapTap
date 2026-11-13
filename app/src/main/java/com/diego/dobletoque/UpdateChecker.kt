@@ -9,7 +9,13 @@ import java.net.URL
 /** Reads the latest release of the (public) GitHub repo and compares it with this version. */
 object UpdateChecker {
 
-    data class Release(val version: String, val apkUrl: String?, val pageUrl: String) {
+    data class Release(
+        val version: String,
+        val apkUrl: String?,
+        val pageUrl: String,
+        /** Changelog (the GitHub release description), cleaned up for plain text. */
+        val notes: String
+    ) {
         val isNewer: Boolean get() = isNewer(version, BuildConfig.VERSION_NAME)
         /** Direct APK download if the release has one, otherwise the release page. */
         val downloadUrl: String get() = apkUrl ?: pageUrl
@@ -45,7 +51,8 @@ object UpdateChecker {
                 Release(
                     version = json.optString("tag_name").removePrefix("v"),
                     apkUrl = apk,
-                    pageUrl = json.optString("html_url", repoUrl)
+                    pageUrl = json.optString("html_url", repoUrl),
+                    notes = cleanNotes(json.optString("body"))
                 )
             }
         } finally {
@@ -54,6 +61,16 @@ object UpdateChecker {
     } catch (e: Exception) {
         null
     }
+
+    /** Light Markdown → plain text: "- x" / "* x" → "• x", no "#" headings, no "**". */
+    private fun cleanNotes(markdown: String): String =
+        markdown.lines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.contains("/compare/") }
+            .joinToString("\n") { line ->
+                val l = line.trimStart('#').trim().replace("**", "")
+                if (l.startsWith("- ") || l.startsWith("* ")) "• " + l.substring(2) else l
+            }
 
     suspend fun fetchLatestAsync(): Release? = withContext(Dispatchers.IO) { fetchLatest() }
 

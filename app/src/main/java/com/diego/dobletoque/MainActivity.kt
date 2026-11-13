@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +64,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -125,13 +128,30 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     var update by remember { mutableStateOf<UpdateChecker.Release?>(null) }
+    var dialogRelease by remember { mutableStateOf<UpdateChecker.Release?>(null) }
     var updateMessage by remember { mutableStateOf<String?>(null) }
     var checking by remember { mutableStateOf(false) }
 
-    // On open: silently check for updates (shows a card only if there is a new version).
+    // On open: check for updates. A new version shows the card at the top and, once per
+    // version (until "Later" is tapped), the update popup.
     LaunchedEffect(Unit) {
         val latest = UpdateChecker.fetchLatestAsync()
-        if (latest != null && latest.isNewer) update = latest
+        if (latest != null && latest.isNewer) {
+            update = latest
+            if (prefs.getString(Prefs.KEY_DISMISSED_VERSION, null) != latest.version) {
+                dialogRelease = latest
+            }
+        }
+    }
+
+    dialogRelease?.let { release ->
+        UpdateDialog(
+            release = release,
+            onLater = {
+                prefs.edit().putString(Prefs.KEY_DISMISSED_VERSION, release.version).apply()
+                dialogRelease = null
+            }
+        )
     }
 
     Scaffold(
@@ -152,7 +172,7 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
         ) {
             StatusCard(serviceEnabled)
 
-            update?.let { release -> UpdateCard(release) }
+            update?.let { release -> UpdateCard(release) { dialogRelease = release } }
 
             Section(stringResource(R.string.section_where)) {
                 PrefSwitch(
@@ -243,6 +263,7 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                                         latest == null -> context.getString(R.string.check_failed)
                                         latest.isNewer -> {
                                             update = latest
+                                            dialogRelease = latest
                                             context.getString(R.string.check_available, latest.version)
                                         }
                                         else -> context.getString(R.string.check_up_to_date)
@@ -296,8 +317,7 @@ private fun StatusCard(enabled: Boolean) {
 }
 
 @Composable
-private fun UpdateCard(release: UpdateChecker.Release) {
-    val context = LocalContext.current
+private fun UpdateCard(release: UpdateChecker.Release, onUpdate: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
@@ -312,11 +332,111 @@ private fun UpdateCard(release: UpdateChecker.Release) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
             )
-            Button(onClick = { openUrl(context, release.downloadUrl) }) {
-                Text(stringResource(R.string.btn_download))
-            }
+            Button(onClick = onUpdate) { Text(stringResource(R.string.btn_update)) }
         }
     }
+}
+
+private enum class UpdatePhase { Ready, NeedsPermission, Downloading, Installing, Failed }
+
+/**
+ * "New version" popup: changelog + Install. Install downloads the APK (with progress) and
+ * opens Android's update confirmation.
+ */
+@Composable
+private fun UpdateDialog(release: UpdateChecker.Release, onLater: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var phase by remember { mutableStateOf(UpdatePhase.Ready) }
+    var progress by remember { mutableStateOf<Float?>(null) }
+    val downloading = phase == UpdatePhase.Downloading
+
+    fun startInstall() {
+        val apkUrl = release.apkUrl
+        if (apkUrl == null) {
+            // Release without an APK attached: fall back to the release page.
+            openUrl(context, release.pageUrl)
+            return
+        }
+        if (!AppUpdater.canInstall(context)) {
+            phase = UpdatePhase.NeedsPermission
+            openInstallPermissionSettings(context)
+            return
+        }
+        phase = UpdatePhase.Downloading
+        progress = null
+        scope.launch {
+            val apk = AppUpdater.download(context, apkUrl) { p -> progress = p }
+            if (apk == null) {
+                phase = UpdatePhase.Failed
+                return@launch
+            }
+            phase = if (AppUpdater.install(context, apk)) UpdatePhase.Installing else UpdatePhase.Failed
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!downloading) onLater() },
+        title = { Text(stringResource(R.string.new_version_title, release.version)) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    stringResource(R.string.update_you_have, BuildConfig.VERSION_NAME),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(stringResource(R.string.whats_new), fontWeight = FontWeight.SemiBold)
+                val noNotes = stringResource(R.string.no_notes)
+                Text(release.notes.ifBlank { noNotes })
+
+                when (phase) {
+                    UpdatePhase.Ready -> {}
+                    UpdatePhase.NeedsPermission -> HintText(stringResource(R.string.permission_hint))
+                    UpdatePhase.Downloading -> {
+                        val p = progress
+                        if (p != null) {
+                            LinearProgressIndicator(progress = { p }, modifier = Modifier.fillMaxWidth())
+                            Text(stringResource(R.string.downloading, (p * 100).toInt()))
+                        } else {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            Text(stringResource(R.string.downloading_unknown))
+                        }
+                    }
+                    UpdatePhase.Installing -> HintText(stringResource(R.string.installing_hint))
+                    UpdatePhase.Failed -> {
+                        HintText(stringResource(R.string.download_failed), error = true)
+                        TextButton(onClick = { openUrl(context, release.downloadUrl) }) {
+                            Text(stringResource(R.string.btn_open_browser))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(enabled = !downloading, onClick = { startInstall() }) {
+                Text(stringResource(R.string.btn_install))
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !downloading, onClick = onLater) {
+                Text(stringResource(R.string.btn_later))
+            }
+        }
+    )
+}
+
+@Composable
+private fun HintText(text: String, error: Boolean = false) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    )
 }
 
 @Composable
@@ -438,6 +558,18 @@ private fun openUrl(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (_: Exception) {
+    }
+}
+
+/** Android's "Install unknown apps" screen for Nap Tap. */
+private fun openInstallPermissionSettings(context: Context) {
+    try {
+        context.startActivity(
+            Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                .setData(Uri.parse("package:${context.packageName}"))
+        )
+    } catch (_: Exception) {
+        openAppInfo(context)
     }
 }
 

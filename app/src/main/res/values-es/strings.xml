@@ -13,7 +13,6 @@
     <!-- Actualización -->
     <string name="update_available_title">Actualización disponible: %1$s</string>
     <string name="update_you_have">Tienes la %1$s.</string>
-    <string name="btn_download">Descargar</string>
 
     <!-- Dónde funciona -->
     <string name="section_where">Dónde funciona</string>
@@ -50,4 +49,19 @@
     <string name="check_available">La versión %1$s está disponible</string>
     <string name="check_up_to_date">Tienes la última versión</string>
     <string name="btn_check_updates">Buscar actualizaciones</string>
+
+    <!-- Ventana de actualización -->
+    <string name="btn_update">Actualizar</string>
+    <string name="new_version_title">Nueva versión: %1$s</string>
+    <string name="whats_new">Novedades</string>
+    <string name="no_notes">Sin detalles para esta versión.</string>
+    <string name="btn_install">Instalar</string>
+    <string name="btn_later">Más tarde</string>
+    <string name="btn_open_browser">Descargar en el navegador</string>
+    <string name="downloading">Descargando… %1$d%%</string>
+    <string name="downloading_unknown">Descargando…</string>
+    <string name="installing_hint">Confirma la actualización en la ventana de Android.</string>
+    <string name="permission_hint">Permite que Nap Tap instale apps, vuelve aquí y toca Instalar otra vez.</string>
+    <string name="download_failed">Falló la descarga. Revisa la conexión y vuelve a intentarlo.</string>
+    <string name="install_failed">No se pudo instalar la actualización. %1$s</string>
 </resources>
