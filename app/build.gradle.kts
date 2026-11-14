@@ -16,16 +16,16 @@ fun signingValue(prop: String, env: String): String? =
 val hasReleaseKey = signingValue("storeFile", "NAPTAP_KEYSTORE_PATH") != null
 
 android {
-    namespace = "com.diego.dobletoque"
+    namespace = "com.czo.tap2nap"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.diego.dobletoque"
+        applicationId = "com.czo.tap2nap"
         minSdk = 28          // Android 9, needed for GLOBAL_ACTION_LOCK_SCREEN
         targetSdk = 35
         // Raise both for every release. versionCode always has to go up.
-        versionCode = 14
-        versionName = "1.13"
+        versionCode = 15
+        versionName = "1.14"
 
         // Where the app looks for updates.
         buildConfigField("String", "GITHUB_REPO", "\"DiegoCZO/Tap2Nap\"")

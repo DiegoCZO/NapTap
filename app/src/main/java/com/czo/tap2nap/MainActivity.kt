@@ -1,4 +1,4 @@
-package com.diego.dobletoque
+package com.czo.tap2nap
 
 import android.app.Activity
 import android.app.LocaleManager
@@ -89,7 +89,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        LauncherIcon.ensureVisible(this)
         serviceEnabled = isServiceEnabled()
         // Show the guided setup the first time, unless the service is already on.
         showOnboarding = !serviceEnabled &&

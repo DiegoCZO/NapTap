@@ -1,4 +1,4 @@
-package com.diego.dobletoque
+package com.czo.tap2nap
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
@@ -42,7 +42,6 @@ class DoubleTapService : AccessibilityService() {
         super.onServiceConnected()
         windowManager = getSystemService(WindowManager::class.java)
         addTouchSensor()
-        LauncherIcon.ensureVisible(this)
     }
 
     @SuppressLint("ClickableViewAccessibility")

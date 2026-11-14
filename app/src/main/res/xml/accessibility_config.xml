@@ -11,4 +11,4 @@
     android:canRetrieveWindowContent="true"
     android:description="@string/service_description"
     android:notificationTimeout="0"
-    android:settingsActivity="com.diego.dobletoque.MainActivity" />
+    android:settingsActivity="com.czo.tap2nap.MainActivity" />

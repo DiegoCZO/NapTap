@@ -1,4 +1,4 @@
-package com.diego.dobletoque
+package com.czo.tap2nap
 
 import android.content.Context
 import android.content.SharedPreferences

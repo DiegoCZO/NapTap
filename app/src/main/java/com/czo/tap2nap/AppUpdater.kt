@@ -1,4 +1,4 @@
-package com.diego.dobletoque
+package com.czo.tap2nap
 
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
