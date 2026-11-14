@@ -69,9 +69,6 @@
     <string name="download_failed">The download failed. Check your connection and try again.</string>
     <string name="install_failed">Couldn\'t install the update. %1$s</string>
 
-    <!-- Hide icon -->
-    <string name="hide_icon_title">Hide app icon</string>
-    <string name="hide_icon_summary">Open these settings from Settings → Apps → Tap2Nap → Additional settings in the app, or from Accessibility → Tap2Nap.</string>
 
     <!-- Vibration strength -->
     <string name="vibration_strength_title">Strength</string>

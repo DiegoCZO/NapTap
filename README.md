@@ -28,14 +28,12 @@ to [Obtainium](https://github.com/ImranR98/Obtainium) to get updates automatical
 - Guided setup on first launch.
 - Material 3 settings with the wallpaper's dynamic colours, themed icon (Android 13+).
 - English and Spanish, with an in-app language switch (Android 13+).
-- Optional hidden app icon: settings stay reachable from Settings → Apps → Tap2Nap →
-  Additional settings in the app, or from Accessibility → Tap2Nap.
+- Settings also reachable from Settings → Apps → Tap2Nap → Additional settings in the
+  app, and from Accessibility → Tap2Nap.
 
 ## First install
-1. Install the APK.
-2. Android 10+ only lets an app hide its icon completely if the icon was disabled from
-   the start, so **Tap2Nap installs without an icon**. Open Settings → Accessibility →
-   Tap2Nap and turn it on: the icon appears in the app drawer.
+1. Install the APK and open Tap2Nap: the guided setup explains what it needs.
+2. Turn on Tap2Nap in Settings → Accessibility.
 3. If Android says *Restricted setting*: Settings → Apps → Tap2Nap → ⋮ → *Allow restricted
    settings*, then try again.
 

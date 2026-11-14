@@ -25,8 +25,8 @@ android {
         minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN requires Android 9
         targetSdk = 35
         // Bump both before every new release (versionCode must always go up).
-        versionCode = 12
-        versionName = "1.11"
+        versionCode = 13
+        versionName = "1.12"
 
         // GitHub repo whose releases are checked for updates (must be public).
         buildConfigField("String", "GITHUB_REPO", "\"DiegoCZO/Tap2Nap\"")

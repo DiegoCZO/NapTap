@@ -31,15 +31,10 @@
             </intent-filter>
         </activity>
 
-        <!-- App drawer icon. A separate alias so it can be hidden ("Hide app icon")
-             without disabling the settings screen itself.
-             Disabled by default on purpose: Android 10+ replaces a hidden icon with an
-             "App info" icon unless the launcher activity was disabled from the start.
-             The app turns it on by itself the first time the service starts
-             (LauncherIcon.showOnFirstRun). -->
+        <!-- App drawer icon (an alias of the settings screen). -->
         <activity-alias
             android:name=".LauncherAlias"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true"
             android:targetActivity=".MainActivity">
             <intent-filter>

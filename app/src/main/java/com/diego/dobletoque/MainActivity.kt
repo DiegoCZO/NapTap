@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        LauncherIcon.showOnFirstRun(this)
+        LauncherIcon.ensureVisible(this)
         serviceEnabled = isServiceEnabled()
         // Guided setup the first time, unless the service is already on.
         showOnboarding = !serviceEnabled &&
@@ -232,8 +232,6 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                     HorizontalDivider()
                     LanguageItem()
                 }
-                HorizontalDivider()
-                HideIconItem()
             }
 
             Section(stringResource(R.string.section_speed)) {
@@ -622,27 +620,6 @@ private fun OnboardingScreen(serviceEnabled: Boolean, onFinish: () -> Unit) {
             }
         }
     }
-}
-
-/** Hides the app drawer icon. Settings stay reachable from Android Settings. */
-@Composable
-private fun HideIconItem() {
-    val context = LocalContext.current
-    var hidden by remember { mutableStateOf(!LauncherIcon.isVisible(context)) }
-    ListItem(
-        headlineContent = { Text(stringResource(R.string.hide_icon_title)) },
-        supportingContent = { Text(stringResource(R.string.hide_icon_summary)) },
-        trailingContent = {
-            Switch(
-                checked = hidden,
-                onCheckedChange = {
-                    hidden = it
-                    LauncherIcon.setVisible(context, !it)
-                }
-            )
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-    )
 }
 
 /**
