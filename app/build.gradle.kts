@@ -25,11 +25,11 @@ android {
         minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN requires Android 9
         targetSdk = 35
         // Bump both before every new release (versionCode must always go up).
-        versionCode = 8
-        versionName = "1.7"
+        versionCode = 9
+        versionName = "1.8"
 
         // GitHub repo whose releases are checked for updates (must be public).
-        buildConfigField("String", "GITHUB_REPO", "\"DiegoCZO/NapTap\"")
+        buildConfigField("String", "GITHUB_REPO", "\"DiegoCZO/Tap2Nap\"")
     }
 
     buildFeatures {
@@ -69,13 +69,13 @@ android {
         abortOnError = false
     }
 
-    // APK name: Nap-Tap-1.1.apk (release) / Nap-Tap-1.1-debug.apk (debug)
+    // APK name: Tap2Nap-1.8.apk (release) / Tap2Nap-1.8-debug.apk (debug)
     applicationVariants.all {
         val variant = this
         outputs.all {
             val suffix = if (variant.buildType.name == "release") "" else "-${variant.buildType.name}"
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-                "Nap-Tap-${variant.versionName}$suffix.apk"
+                "Tap2Nap-${variant.versionName}$suffix.apk"
         }
     }
 }

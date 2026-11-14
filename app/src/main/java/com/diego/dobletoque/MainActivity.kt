@@ -1,5 +1,6 @@
 package com.diego.dobletoque
 
+import android.app.Activity
 import android.app.LocaleManager
 import android.content.ComponentName
 import android.content.Context
@@ -20,10 +21,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -41,7 +44,11 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,6 +61,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -73,14 +81,26 @@ import kotlin.math.roundToInt
 class MainActivity : ComponentActivity() {
 
     private var serviceEnabled by mutableStateOf(false)
+    private var showOnboarding by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         LauncherIcon.showOnFirstRun(this)
+        serviceEnabled = isServiceEnabled()
+        // Guided setup the first time, unless the service is already on.
+        showOnboarding = !serviceEnabled &&
+            !Prefs.get(this).getBoolean(Prefs.KEY_ONBOARDING_DONE, false)
         setContent {
-            NapTapTheme {
-                SettingsScreen(serviceEnabled = serviceEnabled)
+            Tap2NapTheme {
+                if (showOnboarding) {
+                    OnboardingScreen(serviceEnabled = serviceEnabled) {
+                        Prefs.get(this).edit().putBoolean(Prefs.KEY_ONBOARDING_DONE, true).apply()
+                        showOnboarding = false
+                    }
+                } else {
+                    SettingsScreen(serviceEnabled = serviceEnabled)
+                }
             }
         }
     }
@@ -105,7 +125,7 @@ class MainActivity : ComponentActivity() {
 // Theme
 
 @Composable
-private fun NapTapTheme(content: @Composable () -> Unit) {
+private fun Tap2NapTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
     val context = LocalContext.current
     val colors = when {
@@ -159,7 +179,7 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
-                title = { Text("Nap Tap") },
+                title = { Text(stringResource(R.string.app_name)) },
                 scrollBehavior = scrollBehavior
             )
         }
@@ -193,10 +213,19 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                     Prefs.KEY_POCKET, true
                 )
                 HorizontalDivider()
+                var vibrateOn by remember { mutableStateOf(prefs.getBoolean(Prefs.KEY_VIBRATE, false)) }
                 PrefSwitch(
                     stringResource(R.string.vibrate_title), stringResource(R.string.vibrate_summary),
                     Prefs.KEY_VIBRATE, false
-                )
+                ) { on ->
+                    vibrateOn = on
+                    if (on) {
+                        Haptics.vibrate(
+                            context, prefs.getInt(Prefs.KEY_VIBRATION_STRENGTH, Haptics.MEDIUM)
+                        )
+                    }
+                }
+                if (vibrateOn) VibrationStrengthItem()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     HorizontalDivider()
                     LanguageItem()
@@ -485,6 +514,113 @@ private fun PrefSwitch(
     )
 }
 
+/** Light / Medium / Strong. Tapping an option previews it. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VibrationStrengthItem() {
+    val context = LocalContext.current
+    val prefs = remember { Prefs.get(context) }
+    var strength by remember {
+        mutableIntStateOf(prefs.getInt(Prefs.KEY_VIBRATION_STRENGTH, Haptics.MEDIUM))
+    }
+    val labels = listOf(R.string.strength_light, R.string.strength_medium, R.string.strength_strong)
+    Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+        Text(stringResource(R.string.vibration_strength_title), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            stringResource(R.string.vibration_strength_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            labels.forEachIndexed { index, label ->
+                SegmentedButton(
+                    selected = strength == index,
+                    onClick = {
+                        strength = index
+                        prefs.edit().putInt(Prefs.KEY_VIBRATION_STRENGTH, index).apply()
+                        Haptics.vibrate(context, index)
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = labels.size)
+                ) { Text(stringResource(label)) }
+            }
+        }
+    }
+}
+
+/**
+ * Guided setup: 1) what Accessibility is used for + consent (Google Play's "prominent
+ * disclosure"), 2) turn the service on (with help for "Restricted setting"), then done.
+ */
+@Composable
+private fun OnboardingScreen(serviceEnabled: Boolean, onFinish: () -> Unit) {
+    val context = LocalContext.current
+    var step by remember { mutableIntStateOf(0) }
+    val total = 2
+
+    Surface(Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                stringResource(R.string.onb_step, step + 1, total),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            if (step == 0) {
+                Text(stringResource(R.string.onb_welcome_title), style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.onb_welcome_body), style = MaterialTheme.typography.bodyLarge)
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            stringResource(R.string.onb_disclosure_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(stringResource(R.string.onb_disclosure_body), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                Button(onClick = { step = 1 }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.btn_agree))
+                }
+                TextButton(
+                    onClick = { (context as? Activity)?.finish() },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.btn_not_now)) }
+            } else if (!serviceEnabled) {
+                Text(stringResource(R.string.onb_enable_title), style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.onb_enable_body), style = MaterialTheme.typography.bodyLarge)
+                Button(
+                    onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.btn_open_accessibility)) }
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            stringResource(R.string.onb_restricted_title),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(stringResource(R.string.onb_restricted_body), style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { openAppInfo(context) }) {
+                            Text(stringResource(R.string.btn_app_info))
+                        }
+                    }
+                }
+            } else {
+                Text(stringResource(R.string.onb_done_title), style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.onb_done_body), style = MaterialTheme.typography.bodyLarge)
+                Button(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.btn_start))
+                }
+            }
+        }
+    }
+}
+
 /** Hides the app drawer icon. Settings stay reachable from Android Settings. */
 @Composable
 private fun HideIconItem() {
@@ -508,7 +644,7 @@ private fun HideIconItem() {
 
 /**
  * Per-app language (Android 13+). Changing it recreates the screen in the new language;
- * it's the same setting as Android Settings → Apps → Nap Tap → Language.
+ * it's the same setting as Android Settings → Apps → Tap2Nap → Language.
  */
 @Composable
 private fun LanguageItem() {
@@ -585,7 +721,7 @@ private fun openUrl(context: Context, url: String) {
     }
 }
 
-/** Android's "Install unknown apps" screen for Nap Tap. */
+/** Android's "Install unknown apps" screen for Tap2Nap. */
 private fun openInstallPermissionSettings(context: Context) {
     try {
         context.startActivity(

@@ -46,7 +46,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: NapTap-apk
+          name: Tap2Nap-apk
           path: app/build/outputs/apk/release/*.apk
 
       - name: Publish GitHub Release
@@ -59,4 +59,4 @@ jobs:
           if [ -n "$PREV" ]; then RANGE="$PREV..$GITHUB_REF_NAME"; else RANGE="$GITHUB_REF_NAME"; fi
           git log "$RANGE" --no-merges --pretty="- %s" > notes.md
           gh release create "$GITHUB_REF_NAME" app/build/outputs/apk/release/*.apk \
-            --title "Nap Tap ${GITHUB_REF_NAME}" --notes-file notes.md
+            --title "Tap2Nap ${GITHUB_REF_NAME}" --notes-file notes.md

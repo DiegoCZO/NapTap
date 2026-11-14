@@ -3,7 +3,9 @@
 
     <!-- "Check for updates": reads the latest GitHub release -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- In-app update: lets Nap Tap hand the downloaded APK to Android's installer -->
+    <!-- Optional vibration when the screen turns off -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- In-app update: lets Tap2Nap hand the downloaded APK to Android's installer -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Required on Android 11+ to find out which launcher is the default -->
@@ -24,7 +26,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- Settings → Apps → Nap Tap → "Additional settings in the app" -->
+            <!-- Settings → Apps → Tap2Nap → "Additional settings in the app" -->
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.DEFAULT" />

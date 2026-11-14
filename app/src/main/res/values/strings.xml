@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Nap Tap</string>
+    <string name="app_name" translatable="false">Tap2Nap</string>
     <string name="service_description">Turns the screen off with a double tap on the home screen and/or the lock screen. It doesn\'t read or store anything you type: it only detects when each tap happens and locks the phone.</string>
 
     <!-- Status -->
-    <string name="status_on_title">Nap Tap is on</string>
+    <string name="status_on_title">Tap2Nap is on</string>
     <string name="status_on_body">Double tap the home or lock screen to turn the screen off.</string>
-    <string name="status_off_title">Nap Tap is off</string>
-    <string name="status_off_body">Turn on the Nap Tap accessibility service to start.</string>
+    <string name="status_off_title">Tap2Nap is off</string>
+    <string name="status_off_body">Turn on the Tap2Nap accessibility service to start.</string>
     <string name="btn_accessibility_settings">Accessibility settings</string>
     <string name="btn_turn_on">Turn on</string>
 
@@ -65,11 +65,35 @@
     <string name="downloading">Downloading… %1$d%%</string>
     <string name="downloading_unknown">Downloading…</string>
     <string name="installing_hint">Confirm the update in the Android window.</string>
-    <string name="permission_hint">Allow Nap Tap to install apps, then come back and tap Install again.</string>
+    <string name="permission_hint">Allow Tap2Nap to install apps, then come back and tap Install again.</string>
     <string name="download_failed">The download failed. Check your connection and try again.</string>
     <string name="install_failed">Couldn\'t install the update. %1$s</string>
 
     <!-- Hide icon -->
     <string name="hide_icon_title">Hide app icon</string>
-    <string name="hide_icon_summary">Open these settings from Settings → Apps → Nap Tap → Additional settings in the app, or from Accessibility → Nap Tap.</string>
+    <string name="hide_icon_summary">Open these settings from Settings → Apps → Tap2Nap → Additional settings in the app, or from Accessibility → Tap2Nap.</string>
+
+    <!-- Vibration strength -->
+    <string name="vibration_strength_title">Strength</string>
+    <string name="vibration_strength_hint">Tap an option to feel it</string>
+    <string name="strength_light">Light</string>
+    <string name="strength_medium">Medium</string>
+    <string name="strength_strong">Strong</string>
+
+    <!-- Onboarding -->
+    <string name="onb_step">Step %1$d of %2$d</string>
+    <string name="onb_welcome_title">Welcome to Tap2Nap</string>
+    <string name="onb_welcome_body">Turn the screen off with a double tap on the home screen or the lock screen.</string>
+    <string name="onb_disclosure_title">Why Tap2Nap needs Accessibility</string>
+    <string name="onb_disclosure_body">Tap2Nap uses Android\'s Accessibility Service API to:\n• detect when you tap the screen (only the moment of each tap, not where you tap or what you type);\n• check whether the home screen, the app drawer, recent apps or the lock screen PIN pad is showing;\n• turn the screen off for you.\n\nTap2Nap doesn\'t collect, store or share any data, and it never reads what you type.</string>
+    <string name="btn_agree">I agree, continue</string>
+    <string name="btn_not_now">Not now</string>
+    <string name="onb_enable_title">Turn on Tap2Nap</string>
+    <string name="onb_enable_body">In Accessibility, open Tap2Nap (under Downloaded apps) and turn it on.</string>
+    <string name="btn_open_accessibility">Open Accessibility settings</string>
+    <string name="onb_restricted_title">Does Android say \"Restricted setting\"?</string>
+    <string name="onb_restricted_body">That\'s normal for apps installed outside the Play Store. Open App info → ⋮ menu (top right) → Allow restricted settings, then try again.</string>
+    <string name="onb_done_title">All set!</string>
+    <string name="onb_done_body">Double tap the home screen or the lock screen to turn the screen off. You can change the options any time.</string>
+    <string name="btn_start">Go to settings</string>
 </resources>

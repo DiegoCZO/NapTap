@@ -7,7 +7,7 @@
     window is the launcher (and whether its app drawer is open), and whether the lock
     screen is showing the PIN/password pad.
   - flagReportViewIds: to recognise the PIN/pattern and app drawer view IDs.
-  - settingsActivity: "Settings" shortcut in Accessibility → Nap Tap.
+  - settingsActivity: "Settings" shortcut in Accessibility → Tap2Nap.
 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeViewClicked|typeViewLongClicked|typeViewScrolled"

@@ -13,7 +13,6 @@ import android.hardware.SensorManager
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
-import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
@@ -226,10 +225,8 @@ class DoubleTapService : AccessibilityService() {
 
     private fun lockNow(vibrate: Boolean) {
         if (vibrate) {
-            sensor?.performHapticFeedback(
-                HapticFeedbackConstants.LONG_PRESS,
-                HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
-            )
+            val strength = Prefs.get(this).getInt(Prefs.KEY_VIBRATION_STRENGTH, Haptics.MEDIUM)
+            Haptics.vibrate(this, strength)
         }
         performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
     }

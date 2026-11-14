@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "NapTap"
+rootProject.name = "Tap2Nap"
 include(":app")

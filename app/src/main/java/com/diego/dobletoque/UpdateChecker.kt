@@ -30,7 +30,7 @@ object UpdateChecker {
             connectTimeout = 8000
             readTimeout = 8000
             setRequestProperty("Accept", "application/vnd.github+json")
-            setRequestProperty("User-Agent", "NapTap")
+            setRequestProperty("User-Agent", "Tap2Nap")
         }
         try {
             if (conn.responseCode != HttpURLConnection.HTTP_OK) {

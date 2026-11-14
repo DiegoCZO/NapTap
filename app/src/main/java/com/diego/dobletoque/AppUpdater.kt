@@ -20,7 +20,7 @@ import java.net.URL
  */
 object AppUpdater {
 
-    /** Android 8+: the user must allow Nap Tap to "install unknown apps" (once). */
+    /** Android 8+: the user must allow Tap2Nap to "install unknown apps" (once). */
     fun canInstall(context: Context): Boolean = context.packageManager.canRequestPackageInstalls()
 
     /**
@@ -36,7 +36,7 @@ object AppUpdater {
                     connectTimeout = 15000
                     readTimeout = 30000
                     instanceFollowRedirects = true   // GitHub redirects to its file CDN
-                    setRequestProperty("User-Agent", "NapTap")
+                    setRequestProperty("User-Agent", "Tap2Nap")
                 }
                 try {
                     if (conn.responseCode != HttpURLConnection.HTTP_OK) return@withContext null
