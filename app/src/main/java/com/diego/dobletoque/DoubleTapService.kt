@@ -224,11 +224,14 @@ class DoubleTapService : AccessibilityService() {
     }
 
     private fun lockNow(vibrate: Boolean) {
-        if (vibrate) {
-            val strength = Prefs.get(this).getInt(Prefs.KEY_VIBRATION_STRENGTH, Haptics.MEDIUM)
-            Haptics.vibrate(this, strength)
+        if (!vibrate) {
+            performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+            return
         }
-        performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+        val strength = Prefs.get(this).getInt(Prefs.KEY_VIBRATION_STRENGTH, Haptics.MEDIUM)
+        val length = Haptics.vibrate(this, strength)
+        // Turn the screen off right after the vibration, so Android doesn't cut it short.
+        handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) }, length)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

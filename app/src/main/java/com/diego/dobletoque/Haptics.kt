@@ -11,22 +11,24 @@ import android.os.VibratorManager
 /**
  * Short vibration with three strengths (light / medium / strong).
  *
- * It's flagged as an ALARM vibration: Android blocks ordinary app vibrations when the phone
- * is on silent or ring/notification vibration is off, but still plays alarm vibrations.
+ * It's flagged as TOUCH feedback, like keyboard and button haptics: it follows the
+ * "Touch feedback" setting (on by default), not the ring / notification / alarm vibration
+ * settings, so it also works with the phone on silent.
  */
 object Haptics {
     const val LIGHT = 0
     const val MEDIUM = 1
     const val STRONG = 2
 
-    fun vibrate(context: Context, strength: Int) {
+    /** Vibrates and returns the vibration length in ms (0 if there's no vibrator). */
+    fun vibrate(context: Context, strength: Int): Long {
         val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             context.getSystemService(VibratorManager::class.java)?.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
             context.getSystemService(Vibrator::class.java)
         }
-        if (vibrator == null || !vibrator.hasVibrator()) return
+        if (vibrator == null || !vibrator.hasVibrator()) return 0L
 
         // Duration (ms) and amplitude (1..255) for each strength.
         val (duration, amplitude) = when (strength) {
@@ -44,14 +46,17 @@ object Haptics {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             vibrator.vibrate(
                 effect,
-                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM)
+                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH)
             )
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(
                 effect,
-                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build()
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .build()
             )
         }
+        return duration
     }
 }
