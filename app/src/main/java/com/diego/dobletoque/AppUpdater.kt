@@ -13,20 +13,15 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * In-app update: downloads the release APK and hands it to Android's PackageInstaller.
- * Android always shows its own "Update this app?" confirmation; after installing, the app
- * closes (that's how Android updates work) and the accessibility service keeps running.
- */
+// Downloads the APK from the GitHub release and passes it to Android's installer.
+// Android asks the user to confirm, then closes the app and installs the new version.
 object AppUpdater {
 
-    /** Android 8+: the user must allow Tap2Nap to "install unknown apps" (once). */
+    // The user has to allow "install unknown apps" for Tap2Nap once.
     fun canInstall(context: Context): Boolean = context.packageManager.canRequestPackageInstalls()
 
-    /**
-     * Downloads the APK to the cache. [onProgress] gets 0..1, or null if the size is unknown.
-     * Returns the file, or null if the download failed.
-     */
+    // Saves the APK in the cache folder. Progress goes from 0 to 1 (null if the size
+    // is unknown). Returns null if something fails.
     suspend fun download(context: Context, url: String, onProgress: (Float?) -> Unit): File? =
         withContext(Dispatchers.IO) {
             val file = File(context.cacheDir, "update.apk")
@@ -35,7 +30,7 @@ object AppUpdater {
                 val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                     connectTimeout = 15000
                     readTimeout = 30000
-                    instanceFollowRedirects = true   // GitHub redirects to its file CDN
+                    instanceFollowRedirects = true   // GitHub redirects the download
                     setRequestProperty("User-Agent", "Tap2Nap")
                 }
                 try {
@@ -73,7 +68,7 @@ object AppUpdater {
             }
         }
 
-    /** Sends the APK to the system installer. The result arrives in [InstallResultReceiver]. */
+    // The installer answers in InstallResultReceiver.
     suspend fun install(context: Context, apk: File): Boolean = withContext(Dispatchers.IO) {
         try {
             val installer = context.packageManager.packageInstaller
@@ -103,7 +98,7 @@ object AppUpdater {
     }
 }
 
-/** Receives the installer's answer: shows Android's confirmation dialog, or an error. */
+// Shows Android's confirmation dialog, or a message if the install failed.
 class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
@@ -120,10 +115,10 @@ class InstallResultReceiver : BroadcastReceiver() {
                 }
             }
             PackageInstaller.STATUS_SUCCESS -> {
-                // The app is replaced and closed by Android; nothing else to do.
+                // Android replaces and closes the app, nothing to do.
             }
             PackageInstaller.STATUS_FAILURE_ABORTED -> {
-                // The user tapped "Cancel" in Android's dialog.
+                // The user cancelled.
             }
             else -> {
                 val detail = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: ""

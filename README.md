@@ -1,75 +1,66 @@
 # Tap2Nap
 
-**Double tap to sleep for Android.** Turn the screen off with a double tap on the home
-screen and/or the lock screen. Small, open source, no ads, no tracking.
+Double tap to turn off the screen on Android. Works on the home screen and on the lock
+screen. Small, open source, no ads and no tracking.
 
-Requires Android 9 or later. English and Spanish.
+Android 9 or newer. Available in English and Spanish.
 
-<!-- Screenshots: save PNGs in docs/screenshots/ with these names -->
 <p align="center">
   <img src="docs/screenshots/settings.png" width="260" alt="Settings" />
-  <img src="docs/screenshots/onboarding.png" width="260" alt="Guided setup" />
-  <img src="docs/screenshots/update.png" width="260" alt="In-app update" />
+  <img src="docs/screenshots/onboarding.png" width="260" alt="Setup" />
+  <img src="docs/screenshots/update.png" width="260" alt="Update" />
 </p>
 
 ## Download
-Get the latest APK from [Releases](../../releases/latest). You can also add this repository
-to [Obtainium](https://github.com/ImranR98/Obtainium) to get updates automatically.
+Grab the latest APK from [Releases](../../releases/latest). If you use
+[Obtainium](https://github.com/ImranR98/Obtainium), you can add this repo there and get
+updates automatically.
 
-## Features
-- Double tap on the home screen and/or the lock screen to turn the screen off.
-- Ignored while the app drawer or the recent apps screen is open, and while the lock
-  screen PIN pad is showing.
-- **Pocket protection**: does nothing if the proximity sensor is covered.
-- Optional vibration with three strengths.
-- Adjustable double tap speed.
-- **In-app updates**: a popup shows the new version and its changelog, downloads the APK
-  and opens Android's update confirmation.
-- Guided setup on first launch.
-- Material 3 settings with the wallpaper's dynamic colours, themed icon (Android 13+).
-- English and Spanish, with an in-app language switch (Android 13+).
-- Settings also reachable from Settings → Apps → Tap2Nap → Additional settings in the
-  app, and from Accessibility → Tap2Nap.
+## What it does
+- Double tap the home screen or the lock screen to turn the screen off. Each one can be
+  turned on or off.
+- It won't trigger while the app drawer or recent apps are open, or while you're typing
+  your PIN.
+- Pocket protection: if the proximity sensor is covered, nothing happens.
+- Optional vibration, light, medium or strong. It works even with the phone on silent.
+- You can change how fast the double tap has to be.
+- When there's a new version the app tells you, shows what changed and installs it.
+- Light, dark or system theme, and English or Spanish (language switch needs Android 13+).
 
-## First install
-1. Install the APK and open Tap2Nap: the guided setup explains what it needs.
-2. Turn on Tap2Nap in Settings → Accessibility.
-3. If Android says *Restricted setting*: Settings → Apps → Tap2Nap → ⋮ → *Allow restricted
-   settings*, then try again.
+## Setup
+1. Install the APK and open Tap2Nap. It walks you through the setup.
+2. Turn on Tap2Nap in Settings > Accessibility.
+3. If Android says the setting is restricted, go to Settings > Apps > Tap2Nap, tap the
+   three dots menu, choose "Allow restricted settings" and try again.
 
 ## Privacy
-Tap2Nap uses Android's Accessibility Service API only to know *when* the screen is tapped
-(not where, and never what you type), to check which screen is showing, and to turn the
-screen off. It doesn't collect, store or share any data. The only network request is the
-update check against this repository's GitHub Releases.
+Tap2Nap needs the Accessibility permission to know when you tap the screen and which
+screen is showing, and to turn the screen off. It only gets the moment of each tap, not
+where you tapped, and it never reads what you type. Nothing is collected or sent anywhere.
+The only connection it makes is to this repo, to check for updates.
 
 ## How it works
-- A 1×1 px accessibility overlay with `FLAG_WATCH_OUTSIDE_TOUCH` receives an
-  `ACTION_OUTSIDE` event for every touch on the screen without blocking it. Android
-  doesn't expose coordinates, only the time of each touch.
-- Two touches within N ms (300 ms by default) trigger the following checks:
-  - locked and the PIN/password pad is not showing → screen off;
-  - unlocked, the active window is the default launcher and neither the app drawer nor
-    the recent apps screen is open → screen off.
-- If the first tap opens something (a *click* event) or scrolls something (a *scroll*
-  event), the double tap is cancelled.
-- With pocket protection on, the proximity sensor is read once before turning the
-  screen off.
-- The screen is turned off with `GLOBAL_ACTION_LOCK_SCREEN`, just like the power button,
-  so fingerprint and face unlock keep working.
+The service adds an invisible 1x1 pixel window that gets notified of every touch on the
+screen (`FLAG_WATCH_OUTSIDE_TOUCH`) without blocking it. Android doesn't say where the
+touch was, only when. If two touches come close enough together, the app checks which
+screen is showing and then locks the phone with `GLOBAL_ACTION_LOCK_SCREEN`, the same as
+the power button. That's why fingerprint and face unlock keep working.
 
-## Known limitations
-- Since there are no coordinates, a double tap on a part of a widget that doesn't react
-  to touches will still turn the screen off.
-- Lock screen PIN detection relies on common view IDs (AOSP, Pixel, Samsung, Xiaomi…)
-  in `BOUNCER_ID_HINTS`.
-- App drawer and recent apps detection uses Launcher3 / Pixel Launcher view IDs in
-  `LAUNCHER_OVERLAY_IDS`. Other launchers may need their own IDs.
+If the first tap opens or scrolls something, it doesn't count.
+
+## Known issues
+- Since the app doesn't know where you tapped, a double tap on a part of a widget that
+  doesn't react to touches will still turn the screen off.
+- Detecting the PIN pad, the app drawer and recent apps depends on view names that change
+  between phones and launchers. It's tested on the Pixel Launcher. For others you may
+  need to add names to `BOUNCER_ID_HINTS` or `LAUNCHER_OVERLAY_IDS` in
+  `DoubleTapService.kt`.
 
 ## Building
-Open the project in Android Studio, or run `./gradlew assembleRelease` with JDK 17–21.
-Pushing a tag like `v1.8` builds the APK on GitHub Actions and publishes a release whose
-changelog is made from the commit messages since the previous tag.
+Open the project in Android Studio, or run `./gradlew assembleRelease` with JDK 17 or 21.
+
+Pushing a tag like `v1.13` builds the APK on GitHub and publishes a release. The release
+notes are the commit messages since the previous tag.
 
 ## License
-[MIT](LICENSE) © 2026 DiegoCZO
+[MIT](LICENSE), 2026 DiegoCZO

@@ -6,24 +6,24 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** Reads the latest release of the (public) GitHub repo and compares it with this version. */
+// Checks the latest GitHub release (the repo has to be public).
 object UpdateChecker {
 
     data class Release(
         val version: String,
         val apkUrl: String?,
         val pageUrl: String,
-        /** Changelog (the GitHub release description), cleaned up for plain text. */
+        // Text of the GitHub release, without the Markdown.
         val notes: String
     ) {
         val isNewer: Boolean get() = isNewer(version, BuildConfig.VERSION_NAME)
-        /** Direct APK download if the release has one, otherwise the release page. */
+        // The APK if the release has one, otherwise the release page.
         val downloadUrl: String get() = apkUrl ?: pageUrl
     }
 
     val repoUrl: String get() = "https://github.com/${BuildConfig.GITHUB_REPO}"
 
-    /** Blocking network call: never run it on the main thread. Returns null on any error. */
+    // Network call, don't run it on the main thread. Returns null if anything fails.
     fun fetchLatest(): Release? = try {
         val url = URL("https://api.github.com/repos/${BuildConfig.GITHUB_REPO}/releases/latest")
         val conn = (url.openConnection() as HttpURLConnection).apply {
@@ -62,7 +62,7 @@ object UpdateChecker {
         null
     }
 
-    /** Light Markdown → plain text: "- x" / "* x" → "• x", no "#" headings, no "**". */
+    // Turns list items into bullets and removes headings and bold.
     private fun cleanNotes(markdown: String): String =
         markdown.lines()
             .map { it.trim() }
@@ -74,7 +74,7 @@ object UpdateChecker {
 
     suspend fun fetchLatestAsync(): Release? = withContext(Dispatchers.IO) { fetchLatest() }
 
-    /** "1.10" > "1.9" > "1.2.1" > "1.2" */
+    // Compares numbers part by part, so 1.10 is newer than 1.9.
     fun isNewer(remote: String, local: String): Boolean {
         val r = remote.split('.').map { it.trim().toIntOrNull() ?: 0 }
         val l = local.split('.').map { it.trim().toIntOrNull() ?: 0 }

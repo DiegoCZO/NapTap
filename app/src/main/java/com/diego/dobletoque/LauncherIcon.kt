@@ -4,10 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 
-/**
- * The app drawer icon is always visible. Versions 1.6 to 1.11 could hide it; if it was
- * hidden, this puts it back to its default (visible) state.
- */
+// Versions 1.6 to 1.11 had an option to hide the icon. If it was hidden, show it again.
 object LauncherIcon {
     private const val ALIAS = "com.diego.dobletoque.LauncherAlias"
 

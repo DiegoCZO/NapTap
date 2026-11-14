@@ -19,25 +19,15 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
-/**
- * How it works:
+/*
+ * The service adds an invisible 1x1 px window with FLAG_WATCH_OUTSIDE_TOUCH. Android sends
+ * it ACTION_OUTSIDE for every touch on the screen, without blocking it. We don't get the
+ * position of the touch, only the time, but that's enough to spot a double tap.
  *
- * 1. A 1x1 px accessibility overlay with FLAG_WATCH_OUTSIDE_TOUCH is added. Android
- *    sends it an ACTION_OUTSIDE every time a finger touches the screen outside of it
- *    (i.e. anywhere), without blocking or consuming the touch: the launcher and the
- *    lock screen keep working normally. For privacy Android doesn't provide the
- *    coordinates, only the time of the touch, which is all we need.
- *
- * 2. When two touches arrive less than X ms apart, we check where we are:
- *      - locked (keyguard) → is "lock screen" enabled? is the PIN/password pad hidden?
- *      - unlocked → is the active window the default launcher, with the app drawer closed?
- *
- * 3. With pocket protection on, the proximity sensor is read once: if something covers
- *    the screen (pocket, bag), nothing happens.
- *
- * 4. If so, performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) turns the screen off.
- *    This locks just like the power button, so fingerprint / face unlock keep working
- *    (unlike "device admin", which forces the PIN).
+ * On a double tap we check that we're on the lock screen (without the PIN pad) or on the
+ * home screen (without the app drawer or recent apps open), optionally read the proximity
+ * sensor, and then lock with GLOBAL_ACTION_LOCK_SCREEN. That's the same as pressing the
+ * power button, so fingerprint and face unlock still work.
  */
 class DoubleTapService : AccessibilityService() {
 
@@ -79,7 +69,7 @@ class DoubleTapService : AccessibilityService() {
             windowManager?.addView(view, params)
             sensor = view
         } catch (_: Exception) {
-            // If this fails the service stays idle, but nothing breaks.
+            // If this fails the service just does nothing.
         }
     }
 
@@ -112,15 +102,12 @@ class DoubleTapService : AccessibilityService() {
         val root = rootInActiveWindow ?: return false
         val activePackage = root.packageName?.toString() ?: return false
         if (activePackage !in launcherPackages()) return false
-        // Don't turn the screen off while the app drawer or recent apps are open.
+        // Not while the app drawer or recent apps are open.
         return !isLauncherOverlayOpen(root)
     }
 
-    /**
-     * Is the app drawer or the recent apps screen open? Looks for their Launcher3 /
-     * Pixel Launcher views among the views visible on screen. When closed, they are
-     * off-screen or hidden, so isVisibleToUser returns false.
-     */
+    // Looks for the app drawer or recent apps views of the Pixel Launcher (Launcher3).
+    // When they're closed they aren't visible, so isVisibleToUser is false.
     private fun isLauncherOverlayOpen(root: AccessibilityNodeInfo): Boolean {
         val budget = intArrayOf(MAX_NODES_SCANNED_LAUNCHER)
         return hasVisibleId(root, LAUNCHER_OVERLAY_IDS, 0, budget)
@@ -139,24 +126,22 @@ class DoubleTapService : AccessibilityService() {
         return false
     }
 
-    /** Launcher package(s). Queried on every double tap in case the launcher changes. */
+    // Asked on every double tap, in case the default launcher changed.
     private fun launcherPackages(): Set<String> {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val default = packageManager
             .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
             ?.activityInfo?.packageName
-        // "android" = system chooser: no default launcher has been picked yet.
+        // "android" means no default launcher has been chosen yet.
         if (default != null && default != "android") return setOf(default)
         return packageManager.queryIntentActivities(intent, 0)
             .map { it.activityInfo.packageName }
-            .filter { it != "com.android.settings" }   // Settings' FallbackHome
+            .filter { it != "com.android.settings" }   // FallbackHome, not a real launcher
             .toSet()
     }
 
-    /**
-     * Is the PIN / password / pattern pad showing? If so, do nothing, so that typing the
-     * PIN quickly doesn't turn the screen off.
-     */
+    // True if the PIN, password or pattern pad is on screen, so typing the PIN fast
+    // doesn't turn the screen off.
     private fun isBouncerShowing(): Boolean {
         val roots = try {
             windows.mapNotNull { it.root }
@@ -179,12 +164,10 @@ class DoubleTapService : AccessibilityService() {
         return false
     }
 
-    /**
-     * Reads the proximity sensor once. Covered (pocket, bag, face down on something) →
-     * do nothing. No sensor or no reading in time → lock anyway.
-     */
+    // Reads the proximity sensor once. If it's covered (pocket, bag) we do nothing.
+    // If there's no sensor or it doesn't answer in time, we lock anyway.
     private fun lockIfNotCovered(vibrate: Boolean) {
-        if (proximityListener != null) return  // a check is already running
+        if (proximityListener != null) return  // already checking
         val sensorManager = getSystemService(SensorManager::class.java)
         val proximity = sensorManager?.getDefaultSensor(Sensor.TYPE_PROXIMITY)
         if (sensorManager == null || proximity == null) {
@@ -235,14 +218,13 @@ class DoubleTapService : AccessibilityService() {
         }
         val strength = Prefs.get(this).getInt(Prefs.KEY_VIBRATION_STRENGTH, Haptics.MEDIUM)
         val length = Haptics.perform(view, strength)
-        // Turn the screen off right after the vibration, so Android doesn't cut it short.
+        // Lock after the vibration ends, otherwise it can get cut off.
         handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) }, length)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         when (event?.eventType) {
-            // If the first tap opened an app / notification / widget, or scrolled something
-            // (e.g. a list inside a widget), it's not a double tap.
+            // The first tap opened or scrolled something, so it wasn't a double tap.
             AccessibilityEvent.TYPE_VIEW_CLICKED,
             AccessibilityEvent.TYPE_VIEW_LONG_CLICKED,
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> lastTapTime = 0L
@@ -270,16 +252,13 @@ class DoubleTapService : AccessibilityService() {
     }
 
     companion object {
-        /** Ignore near-simultaneous touches (two fingers at once). */
+        // Two fingers at the same time don't count as a double tap.
         private const val MIN_GAP_MS = 40L
         private const val MAX_NODES_SCANNED = 600
         private const val PROXIMITY_TIMEOUT_MS = 300L
         private const val MAX_NODES_SCANNED_LAUNCHER = 1500
 
-        /**
-         * View IDs in Launcher3 / Pixel Launcher (and launchers based on it) where a double
-         * tap must be ignored: the app drawer and the recent apps (overview) screen.
-         */
+        // Pixel Launcher (Launcher3) views where a double tap is ignored.
         private val LAUNCHER_OVERLAY_IDS = setOf(
             // App drawer
             "apps_view", "apps_list_view", "all_apps_header", "search_container_all_apps",
@@ -287,7 +266,7 @@ class DoubleTapService : AccessibilityService() {
             "overview_panel", "overview_actions_view", "clear_all"
         )
 
-        /** Common PIN/password/pattern view IDs on AOSP, Pixel, Samsung, Xiaomi… */
+        // PIN / password / pattern view IDs seen on Pixel, Samsung, Xiaomi and AOSP.
         private val BOUNCER_ID_HINTS = listOf(
             "bouncer", "pinentry", "pin_view", "password_view", "passwordentry",
             "pattern_view", "lockpatternview", "sim_pin", "sim_puk", "key_enter",

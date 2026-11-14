@@ -10,8 +10,13 @@ object Prefs {
     const val KEY_VIBRATE = "vibrate"
     const val KEY_VIBRATION_STRENGTH = "vibration_strength"
     const val KEY_ONBOARDING_DONE = "onboarding_done"
+    const val KEY_THEME = "theme"
+
+    const val THEME_SYSTEM = "system"
+    const val THEME_LIGHT = "light"
+    const val THEME_DARK = "dark"
     const val KEY_POCKET = "pocket_protection"
-    /** Version whose popup was closed with "Later" (not shown again on app open). */
+    // Version whose update popup was closed with "Later".
     const val KEY_DISMISSED_VERSION = "dismissed_update_version"
 
     const val DEFAULT_TIMEOUT = 300   // max ms between the two taps

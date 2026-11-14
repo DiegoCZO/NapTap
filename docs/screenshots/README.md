@@ -1,5 +1,5 @@
-Put the README screenshots here (PNG, taken on the phone):
+Screenshots used in the main README (PNG, taken on the phone):
 
-- `settings.png`   – main settings screen
-- `onboarding.png` – guided setup (first screen)
-- `update.png`     – "New version" popup
+- settings.png
+- onboarding.png
+- update.png

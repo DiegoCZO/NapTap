@@ -3,7 +3,7 @@ name: Build APK
 on:
   push:
     branches: [main]
-    tags: ['v*']        # pushing a tag like v1.1 publishes a GitHub Release
+    tags: ['v*']        # a tag like v1.12 also publishes a release
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0    # full history, to build the changelog from commits
+          fetch-depth: 0    # needed for the changelog
 
       - uses: actions/setup-java@v5
         with:
@@ -54,7 +54,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Changelog = commit messages since the previous tag
+          # Changelog: commit messages since the previous tag
           PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
           if [ -n "$PREV" ]; then RANGE="$PREV..$GITHUB_REF_NAME"; else RANGE="$GITHUB_REF_NAME"; fi
           git log "$RANGE" --no-merges --pretty="- %s" > notes.md

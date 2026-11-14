@@ -27,7 +27,7 @@
     <string name="pocket_summary">No hace nada si el sensor de proximidad está tapado</string>
     <string name="vibrate_title">Vibrar</string>
     <string name="vibrate_summary">Vibración corta al apagar la pantalla</string>
-    <string name="language_title">Idioma</string>
+    <string name="language_title">Idioma (Language)</string>
     <string name="language_system">Idioma del sistema</string>
     <string name="btn_cancel">Cancelar</string>
 
@@ -89,4 +89,11 @@
     <string name="onb_done_title">¡Listo!</string>
     <string name="onb_done_body">Toca dos veces la pantalla de inicio o la de bloqueo para apagar la pantalla. Puedes cambiar las opciones cuando quieras.</string>
     <string name="btn_start">Ir a los ajustes</string>
+
+    <!-- Idioma y tema -->
+    <string name="section_appearance">Idioma y tema</string>
+    <string name="theme_title">Tema</string>
+    <string name="theme_system">Según el sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
 </resources>

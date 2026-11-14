@@ -4,14 +4,9 @@ import android.os.Build
 import android.view.HapticFeedbackConstants
 import android.view.View
 
-/**
- * Short vibration with three strengths (light / medium / strong).
- *
- * Uses the system's haptic feedback with FLAG_IGNORE_GLOBAL_SETTING: Android itself plays
- * the vibration, so it works even with the phone on silent and with touch feedback, ring,
- * notification and alarm vibration turned off. The trade-off: the strength can't be set
- * freely, only picked from the system's predefined effects.
- */
+// Uses the system haptic feedback with FLAG_IGNORE_GLOBAL_SETTING, so it vibrates even
+// on silent or with vibration turned off in the phone settings. The downside is that we
+// can only pick between the system's built-in effects, not set the strength directly.
 object Haptics {
     const val LIGHT = 0
     const val MEDIUM = 1
@@ -19,7 +14,7 @@ object Haptics {
 
     private const val REPEAT_GAP_MS = 70L
 
-    /** Plays the vibration on [view] and returns how long it lasts, in ms. */
+    // Returns roughly how long the vibration lasts, in ms.
     fun perform(view: View, strength: Int): Long {
         return when (strength) {
             LIGHT -> {
@@ -32,7 +27,7 @@ object Haptics {
                 20L
             }
             STRONG -> {
-                // The heaviest single effect, twice in a row.
+                // Strongest effect, played twice.
                 play(view, HapticFeedbackConstants.LONG_PRESS)
                 view.postDelayed({ play(view, HapticFeedbackConstants.LONG_PRESS) }, REPEAT_GAP_MS)
                 REPEAT_GAP_MS + 40L

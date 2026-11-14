@@ -6,8 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// Release signing key. Read from keystore.properties (local PC, not committed to git)
-// or from environment variables (GitHub Actions, filled from the repo secrets).
+// Signing key: keystore.properties on the PC (not in git), or the repo secrets on GitHub.
 val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -22,13 +21,13 @@ android {
 
     defaultConfig {
         applicationId = "com.diego.dobletoque"
-        minSdk = 28          // GLOBAL_ACTION_LOCK_SCREEN requires Android 9
+        minSdk = 28          // Android 9, needed for GLOBAL_ACTION_LOCK_SCREEN
         targetSdk = 35
-        // Bump both before every new release (versionCode must always go up).
-        versionCode = 13
-        versionName = "1.12"
+        // Raise both for every release. versionCode always has to go up.
+        versionCode = 14
+        versionName = "1.13"
 
-        // GitHub repo whose releases are checked for updates (must be public).
+        // Where the app looks for updates.
         buildConfigField("String", "GITHUB_REPO", "\"DiegoCZO/Tap2Nap\"")
     }
 
@@ -53,7 +52,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Own key if available, otherwise the debug key (still installable).
+            // Our key if we have it, otherwise the debug key.
             signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
         }
     }
@@ -69,7 +68,7 @@ android {
         abortOnError = false
     }
 
-    // APK name: Tap2Nap-1.8.apk (release) / Tap2Nap-1.8-debug.apk (debug)
+    // Name the APK Tap2Nap-<version>.apk
     applicationVariants.all {
         val variant = this
         outputs.all {
@@ -81,7 +80,7 @@ android {
 }
 
 dependencies {
-    // Material 3 (Jetpack Compose) for the settings screen
+    // Compose and Material 3 for the settings screen
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")

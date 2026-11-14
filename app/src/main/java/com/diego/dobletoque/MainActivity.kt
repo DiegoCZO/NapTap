@@ -12,6 +12,7 @@ import android.os.LocaleList
 import android.provider.Settings
 import android.text.TextUtils
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
@@ -78,32 +79,56 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-/** Settings screen (Material 3 / Jetpack Compose, with the wallpaper's dynamic colours). */
+// Settings screen.
 class MainActivity : ComponentActivity() {
 
     private var serviceEnabled by mutableStateOf(false)
     private var showOnboarding by mutableStateOf(false)
+    private var themeMode by mutableStateOf(Prefs.THEME_SYSTEM)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         LauncherIcon.ensureVisible(this)
         serviceEnabled = isServiceEnabled()
-        // Guided setup the first time, unless the service is already on.
+        // Show the guided setup the first time, unless the service is already on.
         showOnboarding = !serviceEnabled &&
             !Prefs.get(this).getBoolean(Prefs.KEY_ONBOARDING_DONE, false)
+        themeMode = Prefs.get(this).getString(Prefs.KEY_THEME, Prefs.THEME_SYSTEM) ?: Prefs.THEME_SYSTEM
         setContent {
-            Tap2NapTheme {
+            val dark = when (themeMode) {
+                Prefs.THEME_LIGHT -> false
+                Prefs.THEME_DARK -> true
+                else -> isSystemInDarkTheme()
+            }
+            // Status bar icons have to follow the app theme, not the system one.
+            LaunchedEffect(dark) { setSystemBars(dark) }
+
+            Tap2NapTheme(dark) {
                 if (showOnboarding) {
                     OnboardingScreen(serviceEnabled = serviceEnabled) {
                         Prefs.get(this).edit().putBoolean(Prefs.KEY_ONBOARDING_DONE, true).apply()
                         showOnboarding = false
                     }
                 } else {
-                    SettingsScreen(serviceEnabled = serviceEnabled)
+                    SettingsScreen(
+                        serviceEnabled = serviceEnabled,
+                        themeMode = themeMode,
+                        onThemeChange = { mode ->
+                            themeMode = mode
+                            Prefs.get(this).edit().putString(Prefs.KEY_THEME, mode).apply()
+                        }
+                    )
                 }
             }
         }
+    }
+
+    private fun setSystemBars(dark: Boolean) {
+        val transparent = android.graphics.Color.TRANSPARENT
+        val style = if (dark) SystemBarStyle.dark(transparent)
+        else SystemBarStyle.light(transparent, transparent)
+        enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
     }
 
     override fun onResume() {
@@ -122,12 +147,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ---------------------------------------------------------------------------------------
-// Theme
-
 @Composable
-private fun Tap2NapTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+private fun Tap2NapTheme(dark: Boolean, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val colors = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
@@ -138,12 +159,13 @@ private fun Tap2NapTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = colors, content = content)
 }
 
-// ---------------------------------------------------------------------------------------
-// Screen
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsScreen(serviceEnabled: Boolean) {
+private fun SettingsScreen(
+    serviceEnabled: Boolean,
+    themeMode: String,
+    onThemeChange: (String) -> Unit
+) {
     val context = LocalContext.current
     val view = LocalView.current
     val prefs = remember { Prefs.get(context) }
@@ -155,8 +177,7 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
     var updateMessage by remember { mutableStateOf<String?>(null) }
     var checking by remember { mutableStateOf(false) }
 
-    // On open: check for updates. A new version shows the card at the top and, once per
-    // version (until "Later" is tapped), the update popup.
+    // Check for updates when the screen opens. The popup shows once per version.
     LaunchedEffect(Unit) {
         val latest = UpdateChecker.fetchLatestAsync()
         if (latest != null && latest.isNewer) {
@@ -193,6 +214,15 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // First, so it's easy to find for someone who doesn't read the current language.
+            Section(stringResource(R.string.section_appearance)) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    LanguageItem()
+                    HorizontalDivider()
+                }
+                ThemeItem(themeMode, onThemeChange)
+            }
+
             StatusCard(serviceEnabled)
 
             update?.let { release -> UpdateCard(release) { dialogRelease = release } }
@@ -228,10 +258,6 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
                     }
                 }
                 if (vibrateOn) VibrationStrengthItem()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    HorizontalDivider()
-                    LanguageItem()
-                }
             }
 
             Section(stringResource(R.string.section_speed)) {
@@ -315,9 +341,6 @@ private fun SettingsScreen(serviceEnabled: Boolean) {
     }
 }
 
-// ---------------------------------------------------------------------------------------
-// Components
-
 @Composable
 private fun StatusCard(enabled: Boolean) {
     val context = LocalContext.current
@@ -371,10 +394,7 @@ private fun UpdateCard(release: UpdateChecker.Release, onUpdate: () -> Unit) {
 
 private enum class UpdatePhase { Ready, NeedsPermission, Downloading, Installing, Failed }
 
-/**
- * "New version" popup: changelog + Install. Install downloads the APK (with progress) and
- * opens Android's update confirmation.
- */
+// Update popup with the changelog and an Install button.
 @Composable
 private fun UpdateDialog(release: UpdateChecker.Release, onLater: () -> Unit) {
     val context = LocalContext.current
@@ -386,7 +406,7 @@ private fun UpdateDialog(release: UpdateChecker.Release, onLater: () -> Unit) {
     fun startInstall() {
         val apkUrl = release.apkUrl
         if (apkUrl == null) {
-            // Release without an APK attached: fall back to the release page.
+            // No APK in the release, open the page instead.
             openUrl(context, release.pageUrl)
             return
         }
@@ -514,7 +534,7 @@ private fun PrefSwitch(
     )
 }
 
-/** Light / Medium / Strong. Tapping an option previews it. */
+// Tapping an option also plays it, so you can feel the difference.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VibrationStrengthItem() {
@@ -549,10 +569,8 @@ private fun VibrationStrengthItem() {
     }
 }
 
-/**
- * Guided setup: 1) what Accessibility is used for + consent (Google Play's "prominent
- * disclosure"), 2) turn the service on (with help for "Restricted setting"), then done.
- */
+// First launch: explain why we need Accessibility (Google Play asks for this), then
+// help turn the service on.
 @Composable
 private fun OnboardingScreen(serviceEnabled: Boolean, onFinish: () -> Unit) {
     val context = LocalContext.current
@@ -622,24 +640,21 @@ private fun OnboardingScreen(serviceEnabled: Boolean, onFinish: () -> Unit) {
     }
 }
 
-/**
- * Per-app language (Android 13+). Changing it recreates the screen in the new language;
- * it's the same setting as Android Settings → Apps → Tap2Nap → Language.
- */
+// A list item that opens a dialog to pick one option. Options are (value, label) pairs.
 @Composable
-private fun LanguageItem() {
-    val context = LocalContext.current
-    val options = listOf(
-        "" to stringResource(R.string.language_system),
-        "en" to stringResource(R.string.language_english),
-        "es" to stringResource(R.string.language_spanish)
-    )
-    var current by remember { mutableStateOf(currentAppLanguage(context)) }
+private fun ChoiceItem(
+    title: String,
+    options: List<Pair<String, String>>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
     var showDialog by remember { mutableStateOf(false) }
 
     ListItem(
-        headlineContent = { Text(stringResource(R.string.language_title)) },
-        supportingContent = { Text(options.firstOrNull { it.first == current }?.second ?: options[0].second) },
+        headlineContent = { Text(title) },
+        supportingContent = {
+            Text(options.firstOrNull { it.first == selected }?.second ?: options[0].second)
+        },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.clickable { showDialog = true }
     )
@@ -647,24 +662,21 @@ private fun LanguageItem() {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text(stringResource(R.string.language_title)) },
+            title = { Text(title) },
             text = {
                 Column {
-                    options.forEach { (tag, label) ->
+                    options.forEach { (value, label) ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
                                     showDialog = false
-                                    if (tag != current) {
-                                        current = tag
-                                        setAppLanguage(context, tag)
-                                    }
+                                    if (value != selected) onSelect(value)
                                 }
                                 .padding(vertical = 4.dp)
                         ) {
-                            RadioButton(selected = tag == current, onClick = null)
+                            RadioButton(selected = value == selected, onClick = null)
                             Text(label, modifier = Modifier.padding(start = 12.dp))
                         }
                     }
@@ -678,10 +690,40 @@ private fun LanguageItem() {
     }
 }
 
-// ---------------------------------------------------------------------------------------
-// Helpers
+// Same setting as Settings > Apps > Tap2Nap > Language (Android 13+).
+@Composable
+private fun LanguageItem() {
+    val context = LocalContext.current
+    var current by remember { mutableStateOf(currentAppLanguage(context)) }
+    ChoiceItem(
+        title = stringResource(R.string.language_title),
+        options = listOf(
+            "" to stringResource(R.string.language_system),
+            "en" to stringResource(R.string.language_english),
+            "es" to stringResource(R.string.language_spanish)
+        ),
+        selected = current
+    ) { tag ->
+        current = tag
+        setAppLanguage(context, tag)
+    }
+}
 
-/** "" = system default, otherwise "en" / "es". */
+@Composable
+private fun ThemeItem(themeMode: String, onThemeChange: (String) -> Unit) {
+    ChoiceItem(
+        title = stringResource(R.string.theme_title),
+        options = listOf(
+            Prefs.THEME_SYSTEM to stringResource(R.string.theme_system),
+            Prefs.THEME_LIGHT to stringResource(R.string.theme_light),
+            Prefs.THEME_DARK to stringResource(R.string.theme_dark)
+        ),
+        selected = themeMode,
+        onSelect = onThemeChange
+    )
+}
+
+// Empty means the system language.
 private fun currentAppLanguage(context: Context): String {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return ""
     val locales = context.getSystemService(LocaleManager::class.java)?.applicationLocales
@@ -701,7 +743,7 @@ private fun openUrl(context: Context, url: String) {
     }
 }
 
-/** Android's "Install unknown apps" screen for Tap2Nap. */
+// Opens "Install unknown apps" for Tap2Nap.
 private fun openInstallPermissionSettings(context: Context) {
     try {
         context.startActivity(

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- "Check for updates": reads the latest GitHub release -->
+    <!-- Update check -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- In-app update: lets Tap2Nap hand the downloaded APK to Android's installer -->
+    <!-- Installing updates from the app -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <!-- Required on Android 11+ to find out which launcher is the default -->
+    <!-- To know which launcher is the default one (Android 11+) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -24,14 +24,14 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- Settings → Apps → Tap2Nap → "Additional settings in the app" -->
+            <!-- "Additional settings in the app" in Android's app info -->
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
-        <!-- App drawer icon (an alias of the settings screen). -->
+        <!-- App drawer icon -->
         <activity-alias
             android:name=".LauncherAlias"
             android:enabled="true"

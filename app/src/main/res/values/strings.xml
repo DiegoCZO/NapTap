@@ -28,7 +28,7 @@
     <string name="pocket_summary">Do nothing if the proximity sensor is covered</string>
     <string name="vibrate_title">Vibrate</string>
     <string name="vibrate_summary">Short vibration when the screen turns off</string>
-    <string name="language_title">Language</string>
+    <string name="language_title">Language (Idioma)</string>
     <string name="language_system">System default</string>
     <string name="language_english" translatable="false">English</string>
     <string name="language_spanish" translatable="false">Español</string>
@@ -93,4 +93,11 @@
     <string name="onb_done_title">All set!</string>
     <string name="onb_done_body">Double tap the home screen or the lock screen to turn the screen off. You can change the options any time.</string>
     <string name="btn_start">Go to settings</string>
+
+    <!-- Language and theme -->
+    <string name="section_appearance">Language and theme</string>
+    <string name="theme_title">Theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>
